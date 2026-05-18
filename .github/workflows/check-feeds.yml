@@ -45,4 +45,5 @@ jobs:
           git diff --quiet data/seen-articles.json || \
             git add data/seen-articles.json && \
             git commit -m "chore: update seen articles" && \
+            git pull --rebase origin master
             git push
