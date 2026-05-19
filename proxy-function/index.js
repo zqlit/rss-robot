@@ -1,41 +1,18 @@
-// RSS 抓取代理 — 部署到腾讯云 SCF (Web 函数)，提供国内 IP 中转
+// RSS 抓取代理 — 部署到腾讯云 SCF（事件函数），提供国内 IP 中转
+// 配合 check-feeds.js 使用，设置 PROXY_FUNCTION_URL 即可
 
-const http = require('http');
-const PORT = process.env.PORT || 9000;
-const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
-
-function parseBody(req) {
-  return new Promise((resolve) => {
-    let data = '';
-    req.on('data', (chunk) => (data += chunk));
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        resolve({});
-      }
-    });
-  });
-}
-
-function json(res, status, data) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(data));
-}
-
-const server = http.createServer(async (req, res) => {
-  if (req.method !== 'POST') {
-    return json(res, 405, { error: 'POST only' });
+exports.main_handler = async (event) => {
+  // 尝试多种方式解析请求体（兼容不同 API 网关配置）
+  let body = event.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
   }
+  if (!body || typeof body !== 'object') body = {};
 
-  const { url, timeout = 15000, token } = await parseBody(req);
-
-  if (AUTH_TOKEN && token !== AUTH_TOKEN) {
-    return json(res, 403, { error: 'unauthorized' });
-  }
+  const { url, timeout = 15000 } = body;
 
   if (!url) {
-    return json(res, 400, { error: 'url required' });
+    return { statusCode: 400, body: JSON.stringify({ error: 'url required' }) };
   }
 
   try {
@@ -56,17 +33,21 @@ const server = http.createServer(async (req, res) => {
     const text = await targetRes.text();
     const ct = targetRes.headers.get('content-type') || '';
 
-    json(res, 200, {
-      ok: true,
-      status: targetRes.status,
-      contentType: ct,
-      body: text,
-    });
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ok: true,
+        status: targetRes.status,
+        contentType: ct,
+        body: text,
+      }),
+    };
   } catch (err) {
-    json(res, 502, { ok: false, error: err.message });
+    return {
+      statusCode: 502,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ok: false, error: err.message }),
+    };
   }
-});
-
-server.listen(PORT, () => {
-  console.log(`RSS proxy running on port ${PORT}`);
-});
+};

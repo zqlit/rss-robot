@@ -15,7 +15,7 @@ const OUTPUT_PATH = join(DATA_DIR, 'last-check-output.json');
 const MAX_SEEN = 500;
 const FEISHU_WEBHOOK = process.env.FEISHU_WEBHOOK_URL;
 const FEEDS_URL = process.env.FEEDS_URL; // 远程 JSON 订阅源地址
-const REQUEST_TIMEOUT = 15000;
+const REQUEST_TIMEOUT = 30000;
 const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
 
 
@@ -368,27 +368,45 @@ async function resolveFeed(feedConfig) {
 	const format = feedConfig.format || 'auto';
 	const useProxy = feedConfig.proxy === true || !!PROXY_FUNCTION_URL; // 云函数代理
 
+	// 尝试抓取（带代理回退直连）
+	async function tryFetch(targetUrl, proxy) {
+		try {
+			return await fetchUrl(targetUrl, REQUEST_TIMEOUT, proxy);
+		} catch (err) {
+			// 代理失败时回退直连
+			if (proxy && !feedConfig.proxy) {
+				console.log(`  代理失败: ${err.message}，回退直连...`);
+				try {
+					return await fetchUrl(targetUrl, REQUEST_TIMEOUT, false);
+				} catch (directErr) {
+					throw new Error(`代理和直连均失败: ${directErr.message}`);
+				}
+			}
+			throw err;
+		}
+	}
+
 	// 第一步：抓取内容
 	let response;
 	try {
-		response = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
+		response = await tryFetch(url, useProxy);
 		if (useProxy) console.log(`  通过代理抓取`);
 	} catch (err) {
-		console.log(`  直连失败: ${err.message}，尝试 Feed 发现...`);
+		console.log(`  抓取失败: ${err.message}，尝试 Feed 发现...`);
 		// 请求失败，尝试当作网页发现 Feed
 		try {
-			const htmlResp = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
+			const htmlResp = await tryFetch(url, useProxy);
 			const feedUrl = discoverFeedUrl(htmlResp.text, url);
 			if (feedUrl) {
 				console.log(`  发现 Feed: ${feedUrl}`);
-				response = await fetchUrl(feedUrl, REQUEST_TIMEOUT, useProxy);
+				response = await tryFetch(feedUrl, useProxy);
 			}
 		} catch {
 			// 尝试常见路径
 			const guessedUrl = await tryCommonFeedPaths(url, useProxy);
 			if (guessedUrl) {
 				console.log(`  猜测 Feed: ${guessedUrl}`);
-				response = await fetchUrl(guessedUrl, REQUEST_TIMEOUT, useProxy);
+				response = await tryFetch(guessedUrl, useProxy);
 			}
 		}
 		if (!response) return null;
