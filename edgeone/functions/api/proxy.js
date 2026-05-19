@@ -1,8 +1,7 @@
 // POST /api/proxy — RSS 代理抓取
 
 async function handlePost(context) {
-  const { request, env } = context;
-  const AUTH_TOKEN = env.AUTH_TOKEN || '';
+  const { request } = context;
 
   let body;
   try {
@@ -14,14 +13,7 @@ async function handlePost(context) {
     });
   }
 
-  const { url, timeout = 15000, token } = body;
-
-  if (AUTH_TOKEN && token !== AUTH_TOKEN) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  const { url, timeout = 15000 } = body;
 
   if (!url) {
     return new Response(JSON.stringify({ error: 'url required' }), {

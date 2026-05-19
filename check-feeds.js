@@ -17,7 +17,7 @@ const FEISHU_WEBHOOK = process.env.FEISHU_WEBHOOK_URL;
 const FEEDS_URL = process.env.FEEDS_URL; // 远程 JSON 订阅源地址
 const REQUEST_TIMEOUT = 15000;
 const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
-const PROXY_AUTH_TOKEN = process.env.PROXY_AUTH_TOKEN;    // 云函数鉴权 token，可选
+
 
 // ─── 邮件配置 ───
 const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'resend'; // resend | custom | smtp
@@ -127,7 +127,6 @@ async function fetchViaProxy(url, timeout) {
 	const timer = setTimeout(() => controller.abort(), timeout);
 	try {
 		const payload = { url, timeout };
-		if (PROXY_AUTH_TOKEN) payload.token = PROXY_AUTH_TOKEN;
 
 		const res = await fetch(PROXY_FUNCTION_URL, {
 			method: 'POST',
