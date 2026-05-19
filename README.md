@@ -6,12 +6,21 @@
 
 ```
 rss-monitor/
-├── check-feeds.js            # 主脚本
-├── feeds.yml                 # 本地订阅源配置（备用）
+├── check-feeds.js              # 主脚本
+├── feeds.yml                   # 本地订阅源配置（备用）
+├── edgeone/                    # EdgeOne Pages 部署目录
+│   ├── functions/api/
+│   │   ├── proxy.js            # RSS 代理抓取（国内节点）
+│   │   └── results.js          # KV 缓存查询接口
+│   └── public/
+│       └── index.html
+├── proxy-function/             # 腾讯云 SCF 代理（备用方案）
+│   ├── index.js
+│   └── package.json
 ├── data/
-│   ├── seen-articles.json    # 已读文章记录（自动维护）
-│   └── last-check-output.json # 最近一次检查结果（JSON格式）
-└── README.md                 # 本文档
+│   ├── seen-articles.json      # 已读文章记录（自动维护）
+│   └── last-check-output.json  # 最近一次检查结果（JSON格式）
+└── README.md                   # 本文档
 ```
 
 ## 支持的 Feed 格式
@@ -205,12 +214,57 @@ FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx
 }
 ```
 
+## 境外 IP 封锁解决方案
+
+GitHub Actions 的 Runner 位于境外（美国/欧洲），部分国内博客会屏蔽其 IP。本项目通过**国内代理层**解决此问题。
+
+### 方案一：EdgeOne Pages（推荐，免费）
+
+EdgeOne Pages 提供大陆节点 Edge Functions，每月 300 万次免费调用，需备案域名。
+
+**架构：**
+
+```
+GitHub Action (境外)
+   ↓  POST https://你的域名/api/proxy
+EdgeOne Pages (大陆节点)
+   ↓  fetch 博客
+国内博客正常返回
+```
+
+**部署步骤：**
+
+1. 在 [EdgeOne Pages](https://console.cloud.tencent.com/edgeone/pages) 创建项目，关联本仓库
+2. 根目录设置为 `edgeone/`
+3. Edge Functions 开启
+4. 绑定已备案的域名，加速区域勾选 **中国大陆**
+5. 访问地址即 `https://你的域名/api/proxy`
+
+完成后设置 GitHub Secret：
+
+| Secret | 值 |
+|--------|-----|
+| `PROXY_FUNCTION_URL` | `https://你的域名/api/proxy` |
+
+> 如果不需要鉴权，删除 EdgeOne 环境变量中的 `AUTH_TOKEN` 即可。
+
+### 方案二：腾讯云 SCF（免费，无需域名备案）
+
+云函数 + API 网关方式，同样免费。
+
+**部署文件**：`proxy-function/` 目录，选择 **事件函数** 类型部署，添加 API 网关触发器即可。
+
+---
+
+关键技术细节：`check-feeds.js` 在 `PROXY_FUNCTION_URL` 设置后，所有博客抓取会通过代理转发，无需在 feeds.yml 中对每个订阅源单独配置。
+
 ## 环境变量汇总
 
 | 环境变量 | 必填 | 默认值 | 说明 |
 |----------|------|--------|------|
 | `FEISHU_WEBHOOK_URL` | 否 | - | 飞书机器人 Webhook 地址 |
 | `FEEDS_URL` | 否 | - | 远程 JSON 订阅源地址 |
+| `PROXY_FUNCTION_URL` | 否 | - | 代理函数地址，用于绕过境外 IP 封锁 |
 | `EMAIL_PROVIDER` | 否 | `resend` | 邮件发送方式：`resend` / `smtp` / `custom` |
 | `EMAIL_API_KEY` | 否 | - | Resend/自定义 API 密钥 |
 | `EMAIL_FROM` | 否 | - | 发件人地址 |
@@ -250,6 +304,7 @@ set FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx && set E
 |-------------|-----|
 | `FEISHU_WEBHOOK_URL` | 飞书 Webhook 地址 |
 | `FEEDS_URL` | 远程 JSON 订阅源地址 |
+| `PROXY_FUNCTION_URL` | EdgeOne/SCF 代理函数地址 |
 | `EMAIL_PROVIDER` | `smtp` / `resend` / `custom` |
 | `EMAIL_API_KEY` | Resend/自定义 API 密钥 |
 | `EMAIL_FROM` | 发件人 |
