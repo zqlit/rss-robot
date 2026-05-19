@@ -37,6 +37,8 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           PROXY_FUNCTION_URL: ${{ secrets.PROXY_FUNCTION_URL }}
+          PROXY_FUNCTION_URL_BACKUP: ${{ secrets.PROXY_FUNCTION_URL_BACKUP }}
+          EDGEONE_API_URL: ${{ secrets.EDGEONE_API_URL }}
 
       - name: Commit seen articles
         run: |

@@ -17,6 +17,8 @@ const FEISHU_WEBHOOK = process.env.FEISHU_WEBHOOK_URL;
 const FEEDS_URL = process.env.FEEDS_URL; // 远程 JSON 订阅源地址
 const REQUEST_TIMEOUT = 30000;
 const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
+const PROXY_FUNCTION_URL_BACKUP = process.env.PROXY_FUNCTION_URL_BACKUP; // 备用代理地址
+const EDGEONE_API_URL = process.env.EDGEONE_API_URL; // EdgeOne KV 上报地址，如 https://rssapi.usj.cc/api/update
 
 
 // ─── 邮件配置 ───
@@ -124,36 +126,40 @@ async function fetchUrl(url, timeout = REQUEST_TIMEOUT, useProxy = false) {
 // 通过云函数中转抓取（云函数部署在国内，拥有国内 IP）
 async function fetchViaProxy(url, timeout) {
 	const payload = { url, timeout };
+	const proxyUrls = [PROXY_FUNCTION_URL, PROXY_FUNCTION_URL_BACKUP].filter(Boolean);
 
 	let lastError;
-	for (let attempt = 0; attempt < 2; attempt++) {
-		const controller = new AbortController();
-		const timer = setTimeout(() => controller.abort(), timeout);
-		try {
-			const res = await fetch(PROXY_FUNCTION_URL, {
-				method: 'POST',
-				signal: controller.signal,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
-			const data = await res.json().catch(() => ({}));
-			if (!res.ok || !data.ok) {
-				const errMsg = data.error || `HTTP ${res.status}`;
-				throw new Error(errMsg);
+	for (const proxyUrl of proxyUrls) {
+		for (let attempt = 0; attempt < 2; attempt++) {
+			const controller = new AbortController();
+			const timer = setTimeout(() => controller.abort(), timeout);
+			try {
+				const res = await fetch(proxyUrl, {
+					method: 'POST',
+					signal: controller.signal,
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload)
+				});
+				const data = await res.json().catch(() => ({}));
+				if (!res.ok || !data.ok) {
+					const errMsg = data.error || `HTTP ${res.status}`;
+					throw new Error(errMsg);
+				}
+				if (data.status && data.status >= 400) throw new Error(`目标 HTTP ${data.status}`);
+				return {
+					text: data.body,
+					contentType: (data.contentType || '').toLowerCase()
+				};
+			} catch (err) {
+				lastError = err;
+				if (attempt === 0) {
+					await new Promise(r => setTimeout(r, 1000));
+				}
+			} finally {
+				clearTimeout(timer);
 			}
-			if (data.status && data.status >= 400) throw new Error(`目标 HTTP ${data.status}`);
-			return {
-				text: data.body,
-				contentType: (data.contentType || '').toLowerCase()
-			};
-		} catch (err) {
-			lastError = err;
-			if (attempt === 0) {
-				await new Promise(r => setTimeout(r, 1000)); // 等 1 秒重试
-			}
-		} finally {
-			clearTimeout(timer);
 		}
+		console.log(`  主代理失败，尝试备用代理...`);
 	}
 	throw new Error(`代理: ${lastError?.message}`);
 }
@@ -892,6 +898,39 @@ function saveOutputToJson(newArticles, allNewArticles) {
 	}
 }
 
+// 上报结果到 EdgeOne KV
+async function uploadToEdgeOne(allArticles) {
+	if (!EDGEONE_API_URL) return;
+
+	const byFeed = {};
+	for (const a of allArticles) {
+		const key = a.feedTitle || '未知';
+		if (!byFeed[key]) byFeed[key] = [];
+		byFeed[key].push({ title: a.title, link: a.link, pubDate: a.pubDate, author: a.author });
+	}
+
+	const payload = {
+		timestamp: new Date().toISOString(),
+		total: allArticles.length,
+		feeds: Object.entries(byFeed).map(([name, articles]) => ({ name, articles }))
+	};
+
+	try {
+		const res = await fetch(EDGEONE_API_URL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+		if (res.ok) {
+			console.log(`📡 已上报结果到 EdgeOne KV`);
+		} else {
+			console.log(`⚠️ EdgeOne 上报失败: HTTP ${res.status}`);
+		}
+	} catch (err) {
+		console.log(`⚠️ EdgeOne 上报异常: ${err.message}`);
+	}
+}
+
 // ─── 从远程 JSON 加载订阅源 ───
 async function loadFeedsFromRemote(url) {
 	console.log(`🌐 从远程加载订阅源: ${url}`);
@@ -1026,6 +1065,9 @@ async function main() {
 
 	// 保存结果到 JSON 文件
 	saveOutputToJson(recentNew, allNewArticles);
+
+	// 上报结果到 EdgeOne KV（如果配置了）
+	await uploadToEdgeOne(allNewArticles);
 
 	// 5. 清理旧记录
 	const entries = Object.entries(seenData.articles);

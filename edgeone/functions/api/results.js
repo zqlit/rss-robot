@@ -1,65 +1,59 @@
-// GET /api/results — 读取 KV 中缓存的最近抓取结果
-// 可选参数: ?host=blog.example.com 筛选特定博客
+// GET /api/results — 对外提供最新的 RSS 聚合 JSON 数据
+// 数据由 check-feeds.js 每次运行后通过 POST /api/update 上报
+//
+// 可选参数:
+//   ?feed=博客名   筛选指定博客
+//   ?limit=20      限制返回文章数
 
 export async function onRequest(context) {
+  const { request, env } = context;
+
+  if (!env.RSS_KV) {
+    return new Response(JSON.stringify({ error: 'KV not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
-    const { request, env } = context;
-
-    if (!env.RSS_KV) {
-      return new Response(JSON.stringify({ error: 'KV not configured' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const url = new URL(request.url);
-    const host = url.searchParams.get('host');
-
-    if (host) {
-      const raw = await env.RSS_KV.get(`feed:${host}`);
-      if (!raw) {
-        return new Response(JSON.stringify({ error: 'not found' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-      return new Response(raw, {
+    const raw = await env.RSS_KV.get('latest');
+    if (!raw) {
+      return new Response(JSON.stringify({ total: 0, feeds: [], timestamp: null }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const list = await env.RSS_KV.list({ prefix: 'feed:', limit: 100 });
-    const results = [];
-    for (const key of list.keys) {
-      const raw = await env.RSS_KV.get(key.name);
-      if (raw) {
-        try {
-          const data = JSON.parse(raw);
-          results.push({
-            host: key.name.replace('feed:', ''),
-            url: data.url,
-            status: data.status,
-            contentType: data.contentType,
-            fetchedAt: data.fetchedAt,
-          });
-        } catch {
-          // skip
-        }
-      }
+    let data = JSON.parse(raw);
+    const url = new URL(request.url);
+    const feedFilter = url.searchParams.get('feed');
+    const limit = parseInt(url.searchParams.get('limit')) || 0;
+
+    // 按博客筛选
+    if (feedFilter) {
+      data.feeds = data.feeds.filter((f) => f.name === feedFilter);
     }
 
-    return new Response(JSON.stringify({ count: results.length, results }), {
+    // 限制文章数
+    if (limit > 0) {
+      data.feeds = data.feeds.map((f) => ({
+        ...f,
+        articles: f.articles.slice(0, limit),
+      }));
+    }
+
+    return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=600',
+      },
     });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err.message, stack: err.stack }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

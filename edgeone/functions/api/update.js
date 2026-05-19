@@ -1,0 +1,36 @@
+// POST /api/update — 接收 check-feeds.js 的上报，存入 KV
+
+export async function onRequest(context) {
+  const { request, env } = context;
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'POST only' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!env.RSS_KV) {
+    return new Response(JSON.stringify({ error: 'KV not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const data = await request.json();
+
+    // 存入 KV，7 天过期
+    await env.RSS_KV.put('latest', JSON.stringify(data), { expirationTtl: 604800 });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
