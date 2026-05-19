@@ -16,6 +16,8 @@ const MAX_SEEN = 500;
 const FEISHU_WEBHOOK = process.env.FEISHU_WEBHOOK_URL;
 const FEEDS_URL = process.env.FEEDS_URL; // 远程 JSON 订阅源地址
 const REQUEST_TIMEOUT = 15000;
+const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
+const PROXY_AUTH_TOKEN = process.env.PROXY_AUTH_TOKEN;    // 云函数鉴权 token，可选
 
 // ─── 邮件配置 ───
 const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'resend'; // resend | custom | smtp
@@ -93,7 +95,12 @@ function parseFeedsYml(content) {
 }
 
 // ─── HTTP 请求 ───
-async function fetchUrl(url, timeout = REQUEST_TIMEOUT) {
+async function fetchUrl(url, timeout = REQUEST_TIMEOUT, useProxy = false) {
+	// 通过国内云函数中转，绕过境外 IP 封锁
+	if (useProxy && PROXY_FUNCTION_URL) {
+		return fetchViaProxy(url, timeout);
+	}
+
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeout);
 	try {
@@ -109,6 +116,33 @@ async function fetchUrl(url, timeout = REQUEST_TIMEOUT) {
 		const contentType = (res.headers.get('content-type') || '').toLowerCase();
 		const text = await res.text();
 		return { text, contentType };
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+// 通过云函数中转抓取（云函数部署在国内，拥有国内 IP）
+async function fetchViaProxy(url, timeout) {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), timeout);
+	try {
+		const payload = { url, timeout };
+		if (PROXY_AUTH_TOKEN) payload.token = PROXY_AUTH_TOKEN;
+
+		const res = await fetch(PROXY_FUNCTION_URL, {
+			method: 'POST',
+			signal: controller.signal,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+		if (!res.ok) throw new Error(`代理 HTTP ${res.status}`);
+		const data = await res.json();
+		if (!data.ok) throw new Error(`代理: ${data.error}`);
+		if (data.status && data.status >= 400) throw new Error(`目标 HTTP ${data.status}`);
+		return {
+			text: data.body,
+			contentType: (data.contentType || '').toLowerCase()
+		};
 	} finally {
 		clearTimeout(timer);
 	}
@@ -146,22 +180,17 @@ function discoverFeedUrl(html, baseUrl) {
 }
 
 // ─── 常见 Feed 路径尝试 ───
-async function tryCommonFeedPaths(baseUrl) {
+async function tryCommonFeedPaths(baseUrl, useProxy = false) {
 	const urlObj = new URL(baseUrl);
 	// 包含 JSON Feed 常见路径
 	const paths = ['/feed.json', '/feed/', '/rss/', '/feed.xml', '/rss.xml', '/atom.xml', '/index.xml', '/json/feed', '/wp-json/wp/v2/posts'];
 	for (const path of paths) {
 		const candidate = `${urlObj.protocol}//${urlObj.host}${path}`;
 		try {
-			const res = await fetch(candidate, {
-				method: 'HEAD',
-				headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RSSBot/1.0)' }
-			});
-			if (res.ok) {
-				const ct = (res.headers.get('content-type') || '').toLowerCase();
-				if (ct.includes('xml') || ct.includes('rss') || ct.includes('atom') || ct.includes('json')) {
-					return candidate;
-				}
+			const { contentType } = await fetchUrl(candidate, REQUEST_TIMEOUT, useProxy);
+			const ct = contentType.toLowerCase();
+			if (ct.includes('xml') || ct.includes('rss') || ct.includes('atom') || ct.includes('json')) {
+				return candidate;
 			}
 		} catch {
 			// 忽略，继续尝试
@@ -327,26 +356,27 @@ function isJsonResponse(text, contentType) {
 async function resolveFeed(feedConfig) {
 	const url = typeof feedConfig === 'string' ? feedConfig : feedConfig.url;
 	const format = feedConfig.format || 'auto';
+	const useProxy = feedConfig.proxy === true || !!PROXY_FUNCTION_URL; // 云函数代理
 
 	// 第一步：抓取内容
 	let response;
 	try {
-		response = await fetchUrl(url);
+		response = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
 	} catch (err) {
 		// 请求失败，尝试当作网页发现 Feed
 		try {
-			const htmlResp = await fetchUrl(url);
+			const htmlResp = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
 			const feedUrl = discoverFeedUrl(htmlResp.text, url);
 			if (feedUrl) {
 				console.log(`  发现 Feed: ${feedUrl}`);
-				response = await fetchUrl(feedUrl);
+				response = await fetchUrl(feedUrl, REQUEST_TIMEOUT, useProxy);
 			}
 		} catch {
 			// 尝试常见路径
-			const guessedUrl = await tryCommonFeedPaths(url);
+			const guessedUrl = await tryCommonFeedPaths(url, useProxy);
 			if (guessedUrl) {
 				console.log(`  猜测 Feed: ${guessedUrl}`);
-				response = await fetchUrl(guessedUrl);
+				response = await fetchUrl(guessedUrl, REQUEST_TIMEOUT, useProxy);
 			}
 		}
 		if (!response) return null;
@@ -384,7 +414,7 @@ async function resolveFeed(feedConfig) {
 	const feedUrl = discoverFeedUrl(text, url);
 	if (feedUrl) {
 		console.log(`  发现 Feed: ${feedUrl}`);
-		const feedResp = await fetchUrl(feedUrl);
+		const feedResp = await fetchUrl(feedUrl, REQUEST_TIMEOUT, useProxy);
 		if (feedResp) {
 			if (isJsonResponse(feedResp.text, feedResp.contentType)) {
 				try {
@@ -403,10 +433,10 @@ async function resolveFeed(feedConfig) {
 	}
 
 	// 尝试常见路径
-	const guessedUrl = await tryCommonFeedPaths(url);
+	const guessedUrl = await tryCommonFeedPaths(url, useProxy);
 	if (guessedUrl) {
 		console.log(`  猜测 Feed: ${guessedUrl}`);
-		const guessResp = await fetchUrl(guessedUrl);
+		const guessResp = await fetchUrl(guessedUrl, REQUEST_TIMEOUT, useProxy);
 		if (guessResp) {
 			if (isJsonResponse(guessResp.text, guessResp.contentType)) {
 				try {

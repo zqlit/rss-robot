@@ -1,0 +1,6 @@
+{
+  "name": "rss-proxy",
+  "version": "1.0.0",
+  "description": "RSS fetch proxy for SCF, provides mainland China IP for fetching blocked feeds",
+  "main": "index.js"
+}

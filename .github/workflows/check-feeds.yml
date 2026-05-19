@@ -37,6 +37,8 @@ jobs:
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          PROXY_FUNCTION_URL: ${{ secrets.PROXY_FUNCTION_URL }}
+          PROXY_AUTH_TOKEN: ${{ secrets.PROXY_AUTH_TOKEN }}
 
       - name: Commit seen articles
         run: |
