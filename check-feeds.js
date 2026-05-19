@@ -913,8 +913,8 @@ function getSiteUrl(feedConfig) {
 }
 
 function getFaviconUrl(siteUrl) {
-	const domain = new URL(siteUrl).hostname;
-	return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+	// 使用自建 favicon 接口（自动发现 + 代理返回）
+	return `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(siteUrl)}`;
 }
 
 async function uploadToEdgeOne(allArticles) {

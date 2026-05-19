@@ -51,7 +51,7 @@ const HTML = `<!DOCTYPE html>
 </div>
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/results</span></h3>
-  <p class="desc">获取所有博客最新文章（JSON），支持按博客筛选和限制文章数。每个 Feed 附带站点域名和 favicon 图标地址。</p>
+  <p class="desc">获取所有博客最新文章（JSON），每个 Feed 附带 siteUrl 和 favicon 地址。</p>
   <div class="code"><span class="cmt"># 获取全部</span>
 curl https://rssapi.usj.cc/api/results
 
@@ -61,17 +61,24 @@ curl https://rssapi.usj.cc/api/results?<span class="key">feed</span>=<span class
 <span class="cmt"># 每博客只取最新 3 篇</span>
 curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
 
-<span class="cmt"># 响应示例（含 siteUrl 和 favicon）</span>
+<span class="cmt"># 响应示例</span>
 {
   "<span class="key">feeds</span>": [{
     "<span class="key">name</span>": "<span class="str">吾柯</span>",
     "<span class="key">siteUrl</span>": "<span class="str">https://blog.keepke.com</span>",
-    "<span class="key">favicon</span>": "<span class="str">https://icons.duckduckgo.com/ip3/blog.keepke.com.ico</span>",
-    "<span class="key">articles</span>": [
-      { "<span class="key">title</span>": "...", "<span class="key">link</span>": "...", "<span class="key">pubDate</span>": "...", "<span class="key">author</span>": "..." }
-    ]
+    "<span class="key">favicon</span>": "<span class="str">https://rssapi.usj.cc/api/favicon?url=...</span>",
+    "<span class="key">articles</span>": [...]
   }]
 }</div>
+</div>
+<div class="endpoint">
+  <h3><span class="method get">GET</span><span class="path">/api/favicon</span></h3>
+  <p class="desc">自动发现并返回站点 favicon 图片。抓取目标站 HTML 解析 icon 标签，回退 /favicon.ico。结果缓存在 KV 中。</p>
+  <div class="code"><span class="cmt"># 获取 favicon 图片（可直接用作 &lt;img src&gt;）</span>
+curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
+
+<span class="cmt"># 查看发现的 favicon 原始 URL</span>
+curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>&<span class="key">meta</span>=<span class="str">1</span></div>
 </div>
 <div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/proxy</span></h3>
