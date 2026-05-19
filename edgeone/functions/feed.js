@@ -293,32 +293,35 @@ async function loadFeeds() {
 
 async function checkHealth() {
   const btn = document.getElementById('healthBtn');
-  btn.textContent = '检测中...';
+  if (feeds.length === 0) { showToast('暂无订阅源', true); return; }
+  btn.textContent = '检测中 0/' + feeds.length;
   btn.disabled = true;
-  // 先给全部行设为 checking 状态
-  renderTable(null);
-  const dots = document.querySelectorAll('.status-dot');
-  // 不显示 checking 状态（没有 h 时无 dot），直接开始
-  try {
-    const res = await fetch('/api/health');
-    const data = await res.json();
-    const healthMap = {};
-    for (const r of data.results) {
-      healthMap[r.url] = r;
-    }
+  const healthMap = {};
+  let done = 0;
+  // 每批 5 个并发，逐批更新 UI
+  for (let i = 0; i < feeds.length; i += 5) {
+    const batch = feeds.slice(i, i + 5);
+    await Promise.all(batch.map(async (f) => {
+      try {
+        const res = await fetch('/api/health?url=' + encodeURIComponent(f.url));
+        healthMap[f.url] = await res.json();
+      } catch {
+        healthMap[f.url] = { ok: false, error: 'network error' };
+      }
+      done++;
+      btn.textContent = '检测中 ' + done + '/' + feeds.length;
+    }));
     renderTable(healthMap);
-    document.getElementById('aliveStat').style.display = '';
-    document.getElementById('deadStat').style.display = '';
-    document.getElementById('aliveCount').textContent = data.alive;
-    document.getElementById('deadCount').textContent = data.dead;
-    btn.textContent = '检测存活';
-    btn.disabled = false;
-    showToast('检测完成: 存活 ' + data.alive + ', 异常 ' + data.dead);
-  } catch (err) {
-    btn.textContent = '检测存活';
-    btn.disabled = false;
-    showToast('检测失败: ' + err.message, true);
   }
+  const alive = Object.values(healthMap).filter(r => r.ok).length;
+  const dead = Object.values(healthMap).filter(r => !r.ok).length;
+  document.getElementById('aliveStat').style.display = '';
+  document.getElementById('deadStat').style.display = '';
+  document.getElementById('aliveCount').textContent = alive;
+  document.getElementById('deadCount').textContent = dead;
+  btn.textContent = '检测存活';
+  btn.disabled = false;
+  showToast('存活 ' + alive + ' / 异常 ' + dead);
 }
 
 function openAddModal() {
