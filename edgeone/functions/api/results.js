@@ -29,6 +29,12 @@ export async function onRequest(context) {
     const feedFilter = url.searchParams.get('feed');
     const limit = parseInt(url.searchParams.get('limit')) || 0;
 
+    // 过滤掉没有日期的文章
+    data.feeds = data.feeds.map((f) => ({
+      ...f,
+      articles: f.articles.filter((a) => a.pubDate),
+    }));
+
     // 按博客筛选
     if (feedFilter) {
       data.feeds = data.feeds.filter((f) => f.name === feedFilter);

@@ -245,15 +245,17 @@ function parseFeedXml(xml, feedUrl) {
 		const altLinkMatch = itemXml.match(/<link[^>]+rel=["']alternate["'][^>]+href=["']([^"']+)["']/i);
 		if (altLinkMatch) link = altLinkMatch[1];
 
-		const pubDate = extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'published') || extractTag(itemXml, 'updated') || extractTag(itemXml, 'dc:date');
+		const pubDate = extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'published') || extractTag(itemXml, 'updated') || extractTag(itemXml, 'dc:date') || extractTag(itemXml, 'lastBuildDate') || extractTag(itemXml, 'date') || extractTag(itemXml, 'modified') || extractTag(itemXml, 'created');
 		const author = extractTag(itemXml, 'dc:creator') || extractTag(itemXml, 'author') || '';
 		const authorName = author.replace(/<name>([\s\S]*?)<\/name>/gi, '$1').trim();
 
 		if (title && link) {
+			const articleDate = parseDate(pubDate);
+			if (!articleDate) return;
 			articles.push({
 				title: decodeXml(title).trim(),
 				link: link.trim(),
-				pubDate: pubDate ? new Date(pubDate.trim()).toISOString() : new Date().toISOString(),
+				pubDate: articleDate,
 				author: decodeXml(authorName).trim(),
 				feedTitle: feedTitle || feedUrl
 			});
@@ -292,14 +294,16 @@ function parseJsonFeed(json, feedUrl) {
 	for (const item of items) {
 		const title = item.title || '';
 		const link = item.url || item.id || '';
-		const pubDate = item.date_published || item.date_modified || new Date().toISOString();
+		const pubDate = item.date_published || item.date_modified || item.date || item.published || item.modified || item.created_at || item.createdAt || item.pubDate || item.timestamp || null;
 		const author = Array.isArray(item.authors) ? item.authors.map((a) => a.name).join(', ') : (item.author?.name || item.author || '');
 
 		if (title && link) {
+			const articleDate = parseDate(pubDate);
+			if (!articleDate) continue;
 			articles.push({
 				title: title.trim(),
 				link: link.trim(),
-				pubDate: new Date(pubDate).toISOString(),
+				pubDate: articleDate,
 				author: typeof author === 'string' ? author.trim() : '',
 				feedTitle
 			});
@@ -338,15 +342,17 @@ function parseCustomJson(json, config) {
 	for (const item of items) {
 		const title = getNestedValue(item, titleKey) || '';
 		const link = getNestedValue(item, linkKey) || getNestedValue(item, 'url') || '';
-		const pubDate = getNestedValue(item, pubDateKey) || getNestedValue(item, 'publishedAt') || getNestedValue(item, 'created_at') || new Date().toISOString();
+		const pubDate = getNestedValue(item, pubDateKey) || getNestedValue(item, 'publishedAt') || getNestedValue(item, 'createdAt') || getNestedValue(item, 'created_at') || getNestedValue(item, 'date') || getNestedValue(item, 'published') || getNestedValue(item, 'updatedAt') || getNestedValue(item, 'timestamp') || getNestedValue(item, 'datePublished') || getNestedValue(item, 'dateModified') || null;
 		const author = getNestedValue(item, authorKey) || '';
 		const feedTitle = getNestedValue(item, feedTitleKey) || config.feedTitle || config.url || '';
 
 		if (title && link) {
+			const articleDate = parseDate(pubDate);
+			if (!articleDate) continue;
 			articles.push({
 				title: String(title).trim(),
 				link: String(link).trim(),
-				pubDate: new Date(pubDate).toISOString(),
+				pubDate: articleDate,
 				author: String(typeof author === 'object' ? '' : author).trim(),
 				feedTitle
 			});
@@ -360,6 +366,20 @@ function parseCustomJson(json, config) {
 function getNestedValue(obj, path) {
 	if (!obj || !path) return undefined;
 	return path.split('.').reduce((o, key) => o?.[key], obj);
+}
+
+// 安全解析日期，返回 ISO 字符串或 null
+function parseDate(val) {
+	if (!val) return null;
+	if (typeof val === 'number') {
+		const d = new Date(val > 9999999999 ? val : val * 1000);
+		return isNaN(d.getTime()) ? null : d.toISOString();
+	}
+	const str = String(val).trim();
+	if (!str) return null;
+	const d = new Date(str);
+	if (isNaN(d.getTime())) return null;
+	try { return d.toISOString(); } catch { return null; }
 }
 
 // ─── 判断是否为 JSON ───
