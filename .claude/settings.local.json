@@ -16,7 +16,10 @@
       "Bash(git stash *)",
       "WebFetch(domain:openlist.usj.cc)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d.get\\(\\\\\"feeds\\\\\",[]\\)\\)} feeds'\\)\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(Start-Sleep -Seconds 60)",
+      "Bash(Select-String -Pattern '\"image\"')",
+      "Bash(Select-Object -First 3)"
     ]
   }
 }

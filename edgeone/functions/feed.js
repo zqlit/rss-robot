@@ -441,7 +441,7 @@ function renderLinkTable() {
   }
   document.getElementById('linkEmpty').style.display = 'none';
   tbody.innerHTML = links.map((l, i) => {
-    const img = l.image || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    const img = l.image || l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
     return '<tr>' +
       '<td><img src="' + img + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +
       '<td class="link-name">' + (l.name || '-') + '</td>' +

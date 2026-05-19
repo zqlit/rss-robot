@@ -29,6 +29,8 @@ export async function onRequest(context) {
   if (method === 'GET') {
     const raw = await RSS_KV.get('friend_links');
     const data = raw ? JSON.parse(raw) : { links: [] };
+    // 兼容旧 avatar 字段，统一为 image
+    data.links = data.links.map((l) => ({ ...l, image: l.image || l.avatar || '' }));
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
