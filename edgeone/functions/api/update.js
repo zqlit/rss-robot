@@ -10,18 +10,13 @@ export async function onRequest(context) {
     });
   }
 
-  if (!env.RSS_KV) {
-    return new Response(JSON.stringify({ error: 'KV not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
   try {
     const data = await request.json();
 
-    // 存入 KV，7 天过期
-    await env.RSS_KV.put('latest', JSON.stringify(data), { expirationTtl: 604800 });
+    // 存入 KV（如果已绑定），7 天过期
+    if (env.RSS_KV) {
+      await env.RSS_KV.put('latest', JSON.stringify(data), { expirationTtl: 604800 });
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,

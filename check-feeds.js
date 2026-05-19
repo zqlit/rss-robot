@@ -129,7 +129,10 @@ async function fetchViaProxy(url, timeout) {
 	const proxyUrls = [PROXY_FUNCTION_URL, PROXY_FUNCTION_URL_BACKUP].filter(Boolean);
 
 	let lastError;
-	for (const proxyUrl of proxyUrls) {
+	for (let i = 0; i < proxyUrls.length; i++) {
+		const proxyUrl = proxyUrls[i];
+		const isBackup = i > 0;
+
 		for (let attempt = 0; attempt < 2; attempt++) {
 			const controller = new AbortController();
 			const timer = setTimeout(() => controller.abort(), timeout);
@@ -152,14 +155,14 @@ async function fetchViaProxy(url, timeout) {
 				};
 			} catch (err) {
 				lastError = err;
-				if (attempt === 0) {
+				if (isBackup && attempt === 0) {
 					await new Promise(r => setTimeout(r, 1000));
 				}
 			} finally {
 				clearTimeout(timer);
 			}
 		}
-		console.log(`  主代理失败，尝试备用代理...`);
+		if (isBackup) break; // 备用也只试一轮（2次），不再继续
 	}
 	throw new Error(`代理: ${lastError?.message}`);
 }
@@ -196,14 +199,14 @@ function discoverFeedUrl(html, baseUrl) {
 }
 
 // ─── 常见 Feed 路径尝试 ───
-async function tryCommonFeedPaths(baseUrl, useProxy = false) {
+async function tryCommonFeedPaths(baseUrl) {
 	const urlObj = new URL(baseUrl);
 	// 包含 JSON Feed 常见路径
 	const paths = ['/feed.json', '/feed/', '/rss/', '/feed.xml', '/rss.xml', '/atom.xml', '/index.xml', '/json/feed', '/wp-json/wp/v2/posts'];
 	for (const path of paths) {
 		const candidate = `${urlObj.protocol}//${urlObj.host}${path}`;
 		try {
-			const { contentType } = await fetchUrl(candidate, REQUEST_TIMEOUT, useProxy);
+			const { contentType } = await fetchUrl(candidate, REQUEST_TIMEOUT, false); // 探测不走代理
 			const ct = contentType.toLowerCase();
 			if (ct.includes('xml') || ct.includes('rss') || ct.includes('atom') || ct.includes('json')) {
 				return candidate;
@@ -377,15 +380,17 @@ async function resolveFeed(feedConfig) {
 	// 尝试抓取（带代理回退直连）
 	async function tryFetch(targetUrl, proxy) {
 		try {
-			return await fetchUrl(targetUrl, REQUEST_TIMEOUT, proxy);
+			const result = await fetchUrl(targetUrl, REQUEST_TIMEOUT, proxy);
+			return { result, via: proxy ? 'proxy' : 'direct' };
 		} catch (err) {
 			// 代理失败时回退直连
 			if (proxy && !feedConfig.proxy) {
-				console.log(`  代理失败: ${err.message}，回退直连...`);
 				try {
-					return await fetchUrl(targetUrl, REQUEST_TIMEOUT, false);
-				} catch (directErr) {
-					throw new Error(`代理和直连均失败: ${directErr.message}`);
+					const result = await fetchUrl(targetUrl, REQUEST_TIMEOUT, false);
+					console.log(`  代理失败，回退直连成功`);
+					return { result, via: 'direct' };
+				} catch {
+					throw new Error(`代理和直连均失败: ${err.message}`);
 				}
 			}
 			throw err;
@@ -394,9 +399,12 @@ async function resolveFeed(feedConfig) {
 
 	// 第一步：抓取内容
 	let response;
+	let fetchVia = 'proxy';
 	try {
-		response = await tryFetch(url, useProxy);
-		if (useProxy) console.log(`  通过代理抓取`);
+		const res = await tryFetch(url, useProxy);
+		response = res.result;
+		fetchVia = res.via;
+		console.log(`  抓取成功 (${fetchVia === 'proxy' ? '代理' : '直连'})`);
 	} catch (err) {
 		console.log(`  抓取失败: ${err.message}，尝试 Feed 发现...`);
 		// 请求失败，尝试当作网页发现 Feed
@@ -409,7 +417,7 @@ async function resolveFeed(feedConfig) {
 			}
 		} catch {
 			// 尝试常见路径
-			const guessedUrl = await tryCommonFeedPaths(url, useProxy);
+			const guessedUrl = await tryCommonFeedPaths(url);
 			if (guessedUrl) {
 				console.log(`  猜测 Feed: ${guessedUrl}`);
 				response = await tryFetch(guessedUrl, useProxy);
@@ -469,7 +477,7 @@ async function resolveFeed(feedConfig) {
 	}
 
 	// 尝试常见路径
-	const guessedUrl = await tryCommonFeedPaths(url, useProxy);
+	const guessedUrl = await tryCommonFeedPaths(url);
 	if (guessedUrl) {
 		console.log(`  猜测 Feed: ${guessedUrl}`);
 		const guessResp = await fetchUrl(guessedUrl, REQUEST_TIMEOUT, useProxy);
