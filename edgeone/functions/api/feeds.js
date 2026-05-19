@@ -11,6 +11,17 @@ function respond(data, status = 200) {
   });
 }
 
+async function requireAuth(request) {
+  const url = new URL(request.url);
+  const cookieHeader = request.headers.get('Cookie') || '';
+  const cookieMatch = cookieHeader.match(/site_token=([^;]+)/);
+  const token = url.searchParams.get('token') || (cookieMatch ? cookieMatch[1] : '');
+  if (typeof RSS_KV === 'undefined') return true;
+  const password = await RSS_KV.get('site_password');
+  if (!password) return true;
+  return token === password;
+}
+
 // GET — 返回 feeds 列表（兼容 loadFeedsFromRemote 的 { feeds: [...] } 格式）
 async function handleList() {
   if (typeof RSS_KV === 'undefined') {
@@ -100,8 +111,10 @@ export async function onRequest(context) {
     case 'GET':
       return handleList();
     case 'POST':
+      if (!await requireAuth(request)) return respond({ error: 'unauthorized' }, 401);
       return handleAdd(request);
     case 'DELETE':
+      if (!await requireAuth(request)) return respond({ error: 'unauthorized' }, 401);
       return handleRemove(request);
     default:
       return respond({ error: 'method not allowed' }, 405);

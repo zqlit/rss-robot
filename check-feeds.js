@@ -19,6 +19,7 @@ const REQUEST_TIMEOUT = 30000;
 const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
 const PROXY_FUNCTION_URL_BACKUP = process.env.PROXY_FUNCTION_URL_BACKUP; // 备用代理地址
 const EDGEONE_API_URL = process.env.EDGEONE_API_URL; // EdgeOne KV 上报地址，如 https://rssapi.usj.cc/api/update
+const SITE_TOKEN = process.env.SITE_TOKEN; // 网站口令（用于 EdgeOne API 鉴权）
 
 
 // ─── 邮件配置 ───
@@ -136,8 +137,9 @@ async function fetchViaProxy(url, timeout) {
 		for (let attempt = 0; attempt < 2; attempt++) {
 			const controller = new AbortController();
 			const timer = setTimeout(() => controller.abort(), timeout);
+			const proxiedUrl = isBackup ? appendToken(proxyUrl) : proxyUrl;
 			try {
-				const res = await fetch(proxyUrl, {
+				const res = await fetch(proxiedUrl, {
 					method: 'POST',
 					signal: controller.signal,
 					headers: { 'Content-Type': 'application/json' },
@@ -917,6 +919,13 @@ function getFaviconUrl(siteUrl) {
 	return `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(siteUrl)}`;
 }
 
+// 给 URL 附加 token 参数（用于 EdgeOne API 鉴权）
+function appendToken(url) {
+	if (!SITE_TOKEN) return url;
+	const sep = url.includes('?') ? '&' : '?';
+	return url + sep + 'token=' + encodeURIComponent(SITE_TOKEN);
+}
+
 async function uploadToEdgeOne(allArticles) {
 	if (!EDGEONE_API_URL) return;
 
@@ -939,7 +948,8 @@ async function uploadToEdgeOne(allArticles) {
 	};
 
 	try {
-		const res = await fetch(EDGEONE_API_URL, {
+		const urlWithToken = appendToken(EDGEONE_API_URL);
+		const res = await fetch(urlWithToken, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
