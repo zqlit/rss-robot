@@ -907,20 +907,35 @@ function saveOutputToJson(newArticles, allNewArticles) {
 }
 
 // 上报结果到 EdgeOne KV
+// 从 feed URL 提取站点域名和 favicon
+function getSiteUrl(feedConfig) {
+	return typeof feedConfig === 'string' ? feedConfig : feedConfig.url;
+}
+
+function getFaviconUrl(siteUrl) {
+	const domain = new URL(siteUrl).hostname;
+	return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+}
+
 async function uploadToEdgeOne(allArticles) {
 	if (!EDGEONE_API_URL) return;
 
 	const byFeed = {};
 	for (const a of allArticles) {
 		const key = a.feedTitle || '未知';
-		if (!byFeed[key]) byFeed[key] = [];
-		byFeed[key].push({ title: a.title, link: a.link, pubDate: a.pubDate, author: a.author });
+		if (!byFeed[key]) byFeed[key] = { articles: [], siteUrl: a.siteUrl || '' };
+		byFeed[key].articles.push({ title: a.title, link: a.link, pubDate: a.pubDate, author: a.author });
 	}
 
 	const payload = {
 		timestamp: new Date().toISOString(),
 		total: allArticles.length,
-		feeds: Object.entries(byFeed).map(([name, articles]) => ({ name, articles }))
+		feeds: Object.entries(byFeed).map(([name, { articles, siteUrl }]) => ({
+			name,
+			siteUrl,
+			favicon: siteUrl ? getFaviconUrl(siteUrl) : '',
+			articles,
+		})),
 	};
 
 	try {
@@ -1035,7 +1050,7 @@ async function main() {
 
 			// 筛选新文章（最多取最新 10 篇检查）
 			const recentArticles = articles.slice(0, 10);
-			allFetchedArticles.push(...recentArticles.map((a) => ({ ...a, feedTitle: feedTitle || '未知' })));
+			allFetchedArticles.push(...recentArticles.map((a) => ({ ...a, feedTitle: feedTitle || '未知', siteUrl: url })));
 			const newOnes = recentArticles.filter((a) => !seenData.articles[a.link]);
 
 			if (newOnes.length > 0) {
