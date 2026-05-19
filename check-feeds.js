@@ -123,28 +123,39 @@ async function fetchUrl(url, timeout = REQUEST_TIMEOUT, useProxy = false) {
 
 // 通过云函数中转抓取（云函数部署在国内，拥有国内 IP）
 async function fetchViaProxy(url, timeout) {
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), timeout);
-	try {
-		const payload = { url, timeout };
+	const payload = { url, timeout };
 
-		const res = await fetch(PROXY_FUNCTION_URL, {
-			method: 'POST',
-			signal: controller.signal,
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(payload)
-		});
-		if (!res.ok) throw new Error(`代理 HTTP ${res.status}`);
-		const data = await res.json();
-		if (!data.ok) throw new Error(`代理: ${data.error}`);
-		if (data.status && data.status >= 400) throw new Error(`目标 HTTP ${data.status}`);
-		return {
-			text: data.body,
-			contentType: (data.contentType || '').toLowerCase()
-		};
-	} finally {
-		clearTimeout(timer);
+	let lastError;
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), timeout);
+		try {
+			const res = await fetch(PROXY_FUNCTION_URL, {
+				method: 'POST',
+				signal: controller.signal,
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok || !data.ok) {
+				const errMsg = data.error || `HTTP ${res.status}`;
+				throw new Error(errMsg);
+			}
+			if (data.status && data.status >= 400) throw new Error(`目标 HTTP ${data.status}`);
+			return {
+				text: data.body,
+				contentType: (data.contentType || '').toLowerCase()
+			};
+		} catch (err) {
+			lastError = err;
+			if (attempt === 0) {
+				await new Promise(r => setTimeout(r, 1000)); // 等 1 秒重试
+			}
+		} finally {
+			clearTimeout(timer);
+		}
 	}
+	throw new Error(`代理: ${lastError?.message}`);
 }
 
 // ─── 从 HTML 页面自动发现 Feed ───
