@@ -39,7 +39,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>登录 · RSS 管理</title>
+<title>登录 · 互联中心</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,7 +56,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
 <div class="login-box">
-  <h1>RSS 管理</h1>
+  <h1>互联中心</h1>
   <p>请输入访问口令</p>
   <input type="password" id="pwd" placeholder="口令" autofocus>
   <button onclick="login()">进入</button>
@@ -88,7 +88,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>订阅源管理 · RSS Robot</title>
+<title>互联中心 · RSS Robot</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d2991d; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -142,12 +142,14 @@ const MANAGE_HTML = `<!DOCTYPE html>
   .tab button.active { background: #1f6feb; color: #fff; }
   .feed-url-bar { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
   .feed-url-bar code { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); font-size: 12px; }
+  .link-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--border); }
+  .link-name { color: #fff; font-weight: 500; display: flex; align-items: center; gap: 10px; }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-  <h1>RSS 订阅源管理</h1>
+  <h1>互联中心</h1>
   <div class="actions">
     <a href="/" class="btn btn-secondary" target="_blank">API 文档</a>
     <button class="btn btn-secondary" onclick="checkHealth()" id="healthBtn">检测存活</button>
@@ -163,18 +165,28 @@ const MANAGE_HTML = `<!DOCTYPE html>
 
 <div class="stats">
   <div class="stat"><div class="num" id="feedCount">0</div><div class="label">订阅源</div></div>
+  <div class="stat"><div class="num" id="linkCount">0</div><div class="label">友链</div></div>
   <div class="stat alive" id="aliveStat" style="display:none"><div class="num" id="aliveCount">0</div><div class="label">存活</div></div>
   <div class="stat dead" id="deadStat" style="display:none"><div class="num" id="deadCount">0</div><div class="label">异常</div></div>
 </div>
 
 <div class="tab">
-  <button class="active" onclick="showTab('feeds')">订阅源列表</button>
+  <button class="active" onclick="showTab('feeds')">订阅源</button>
+  <button onclick="showTab('links')">友链</button>
   <button onclick="showTab('password')">访问口令</button>
 </div>
 
 <div id="tab-feeds">
   <table><thead><tr><th style="width:220px">博客名称</th><th>URL</th><th style="width:100px">操作</th></tr></thead><tbody id="feedTableBody"></tbody></table>
   <div class="empty" id="emptyMsg" style="display:none"><h3>暂无订阅源</h3><p>点击上方按钮添加第一个</p></div>
+</div>
+
+<div id="tab-links" style="display:none">
+  <div style="margin-bottom:16px">
+    <button class="btn btn-primary" onclick="openLinkModal()">+ 添加友链</button>
+  </div>
+  <table><thead><tr><th style="width:50px"></th><th style="width:180px">站点名称</th><th>URL</th><th style="width:200px">描述</th><th style="width:100px">操作</th></tr></thead><tbody id="linkTableBody"></tbody></table>
+  <div class="empty" id="linkEmpty" style="display:none"><h3>暂无友链</h3><p>点击上方按钮添加</p></div>
 </div>
 
 <div id="tab-password" style="display:none">
@@ -221,6 +233,28 @@ const MANAGE_HTML = `<!DOCTYPE html>
   </div>
 </div>
 
+<!-- 友链弹窗 -->
+<div class="modal-overlay" id="linkModal">
+  <div class="modal">
+    <h2 id="linkModalTitle">添加友链</h2>
+    <label>站点名称</label>
+    <input type="text" id="linkName" placeholder="示例博客">
+    <label>站点 URL</label>
+    <input type="text" id="linkUrl" placeholder="https://example.com">
+    <label>头像 URL（留空自动获取 favicon）</label>
+    <input type="text" id="linkAvatar" placeholder="自动获取">
+    <label>描述</label>
+    <input type="text" id="linkDesc" placeholder="一个很棒的博客">
+    <label>RSS 订阅地址（选填）</label>
+    <input type="text" id="linkRss" placeholder="https://example.com/feed">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeLinkModal()">取消</button>
+      <button class="btn btn-primary" id="linkSaveBtn" onclick="saveLink()">保存</button>
+      <button class="btn btn-danger" id="linkDeleteBtn" style="display:none" onclick="deleteLink()">删除</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -245,8 +279,9 @@ function copyFeedUrl() {
 }
 
 function showTab(name) {
-  document.querySelectorAll('.tab button').forEach((b, i) => b.classList.toggle('active', (i === 0 && name === 'feeds') || (i === 1 && name === 'password')));
+  document.querySelectorAll('.tab button').forEach((b, i) => b.classList.toggle('active', (i === 0 && name === 'feeds') || (i === 1 && name === 'links') || (i === 2 && name === 'password')));
   document.getElementById('tab-feeds').style.display = name === 'feeds' ? '' : 'none';
+  document.getElementById('tab-links').style.display = name === 'links' ? '' : 'none';
   document.getElementById('tab-password').style.display = name === 'password' ? '' : 'none';
 }
 
@@ -393,6 +428,111 @@ async function deleteFeed() {
   }
 }
 
+// ─── 友链管理 ───
+let links = [];
+let editingLinkUrl = null;
+
+function renderLinkTable() {
+  const tbody = document.getElementById('linkTableBody');
+  if (links.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('linkEmpty').style.display = '';
+    return;
+  }
+  document.getElementById('linkEmpty').style.display = 'none';
+  tbody.innerHTML = links.map((l, i) => {
+    const avatar = l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    return '<tr>' +
+      '<td><img src="' + avatar + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +
+      '<td class="link-name">' + (l.name || '-') + '</td>' +
+      '<td class="url">' + l.url + '</td>' +
+      '<td style="font-size:12px;color:var(--muted)">' + (l.description || '') + '</td>' +
+      '<td class="actions"><button class="btn btn-secondary" onclick="openEditLink(' + i + ')">编辑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+async function loadLinks() {
+  try {
+    const res = await fetch('/api/links');
+    const data = await res.json();
+    links = data.links || [];
+    document.getElementById('linkCount').textContent = links.length;
+    renderLinkTable();
+  } catch (err) {
+    showToast('加载友链失败: ' + err.message, true);
+  }
+}
+
+function openLinkModal() {
+  editingLinkUrl = null;
+  document.getElementById('linkModalTitle').textContent = '添加友链';
+  document.getElementById('linkName').value = '';
+  document.getElementById('linkUrl').value = '';
+  document.getElementById('linkAvatar').value = '';
+  document.getElementById('linkDesc').value = '';
+  document.getElementById('linkRss').value = '';
+  document.getElementById('linkDeleteBtn').style.display = 'none';
+  document.getElementById('linkModal').classList.add('active');
+}
+
+function openEditLink(idx) {
+  const l = links[idx];
+  editingLinkUrl = l.url;
+  document.getElementById('linkModalTitle').textContent = '编辑友链';
+  document.getElementById('linkName').value = l.name || '';
+  document.getElementById('linkUrl').value = l.url || '';
+  document.getElementById('linkAvatar').value = l.avatar || '';
+  document.getElementById('linkDesc').value = l.description || '';
+  document.getElementById('linkRss').value = l.rss || '';
+  document.getElementById('linkDeleteBtn').style.display = '';
+  document.getElementById('linkModal').classList.add('active');
+}
+
+function closeLinkModal() {
+  document.getElementById('linkModal').classList.remove('active');
+}
+
+async function saveLink() {
+  const name = document.getElementById('linkName').value.trim();
+  const url = document.getElementById('linkUrl').value.trim();
+  if (!name && !url) { showToast('名称和 URL 至少填一个', true); return; }
+  if (!url) { showToast('URL 不能为空', true); return; }
+  const body = { name: name || url, url: url };
+  const avatar = document.getElementById('linkAvatar').value.trim();
+  if (avatar) body.avatar = avatar;
+  const desc = document.getElementById('linkDesc').value.trim();
+  if (desc) body.description = desc;
+  const rss = document.getElementById('linkRss').value.trim();
+  if (rss) body.rss = rss;
+  try {
+    const res = await fetch('/api/links?token=' + encodeURIComponent(token), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    closeLinkModal();
+    showToast(editingLinkUrl ? '已更新' : '已添加');
+    loadLinks();
+  } catch (err) {
+    showToast('保存失败: ' + err.message, true);
+  }
+}
+
+async function deleteLink() {
+  if (!editingLinkUrl || !confirm('确定删除 ' + editingLinkUrl + ' ？')) return;
+  try {
+    const res = await fetch('/api/links?token=' + encodeURIComponent(token) + '&url=' + encodeURIComponent(editingLinkUrl), { method: 'DELETE' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    closeLinkModal();
+    showToast('已删除');
+    loadLinks();
+  } catch (err) {
+    showToast('删除失败: ' + err.message, true);
+  }
+}
+
 async function changePassword() {
   const oldPwd = document.getElementById('oldPwd').value;
   const newPwd = document.getElementById('newPwd').value;
@@ -417,6 +557,7 @@ async function changePassword() {
 }
 
 loadFeeds();
+loadLinks();
 </script>
 </body>
 </html>`;

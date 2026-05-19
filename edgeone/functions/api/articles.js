@@ -40,14 +40,13 @@ export async function onRequest(context) {
       }
     }
 
-    // 过滤掉没有日期的文章，按发布时间倒序
-    const valid = articles.filter(a => a.pubDate);
-    valid.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    // 按发布时间倒序
+    articles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
     const result = {
       timestamp: data.timestamp,
-      total: valid.length,
-      articles: valid.slice(0, limit),
+      total: articles.length,
+      articles: articles.slice(0, limit),
     };
 
     return new Response(JSON.stringify(result), {

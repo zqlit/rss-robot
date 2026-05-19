@@ -251,7 +251,7 @@ function parseFeedXml(xml, feedUrl) {
 
 		if (title && link) {
 			const articleDate = parseDate(pubDate);
-			if (!articleDate) return;
+			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: decodeXml(title).trim(),
 				link: link.trim(),
@@ -299,7 +299,7 @@ function parseJsonFeed(json, feedUrl) {
 
 		if (title && link) {
 			const articleDate = parseDate(pubDate);
-			if (!articleDate) continue;
+			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: title.trim(),
 				link: link.trim(),
@@ -348,7 +348,7 @@ function parseCustomJson(json, config) {
 
 		if (title && link) {
 			const articleDate = parseDate(pubDate);
-			if (!articleDate) continue;
+			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: String(title).trim(),
 				link: String(link).trim(),

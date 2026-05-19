@@ -86,7 +86,7 @@ const DOCS_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RSS API · 博客订阅聚合</title>
+<title>互联中心 · 博客订阅聚合</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -121,9 +121,9 @@ const DOCS_HTML = `<!DOCTYPE html>
 <body>
 <div class="container">
 <header>
-  <h1>RSS API</h1>
-  <p>博客 RSS 订阅聚合 · 数据每小时自动刷新</p>
-  <div class="nav-links"><a href="/feed">管理订阅源</a></div>
+  <h1>互联中心</h1>
+  <p>博客 RSS 订阅聚合 · 友链管理 · 数据每小时自动刷新</p>
+  <div class="nav-links"><a href="/feed">互联中心管理</a></div>
 </header>
 <div class="stats">
   <div class="stat"><div class="num" id="feedCount">-</div><div class="label">订阅源</div></div>
@@ -196,6 +196,27 @@ curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<spa
 curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span></div>
 </div>
 
+
+	<div class="endpoint">
+	  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/links</span></h3>
+	  <p class="desc">友链管理 API。GET 公开，POST/DELETE 需要口令。支持单条或批量操作。</p>
+	  <div class="code"><span class="cmt"># 查看所有友链（无需口令）</span>
+	curl https://rssapi.usj.cc/api/links
+
+	<span class="cmt"># 添加友链（需要 ?token=口令）</span>
+	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
+	  -H <span class="str">"Content-Type: application/json"</span> \
+	  -d <span class="str">'{"name": "示例博客", "url": "https://example.com", "description": "一个很棒的博客"}'</span>
+
+	<span class="cmt"># 批量导入</span>
+	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
+	  -H <span class="str">"Content-Type: application/json"</span> \
+	  -d <span class="str">'{"links": [{ "name": "...", "url": "..." }, ...]}'</span>
+
+	<span class="cmt"># 删除友链（需要 ?token=口令）</span>
+	curl -X DELETE https://rssapi.usj.cc/api/links?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span></div>
+	</div>
+
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/favicon</span></h3>
   <p class="desc">自动发现并返回站点 favicon 图片。<strong style="color:var(--green)">无需口令</strong></p>
@@ -240,7 +261,7 @@ curl -X POST https://rssapi.usj.cc/api/proxy?<span class="key">token</span>=<spa
 </div>
 
 <footer>
-  管理：<a href="/feed">订阅源管理</a>
+  管理：<a href="/feed">互联中心</a>
   · 数据来源：<a href="https://github.com/cheungray123/rss-robot" target="_blank">RSS Robot</a>
   · 代理：<a href="https://scfapi.usj.cc" target="_blank">SCF 国内节点</a>
   · 托管：<a href="https://pages.edgeone.ai" target="_blank">EdgeOne Pages</a>
