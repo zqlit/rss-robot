@@ -29,9 +29,11 @@ export async function onRequest(context) {
   if (method === 'GET') {
     const raw = await RSS_KV.get('friend_links');
     const data = raw ? JSON.parse(raw) : { links: [] };
-    // 兼容旧 avatar 字段，统一为 image
-    data.links = data.links.map((l) => ({ ...l, image: l.image || l.avatar || '' }));
-    return new Response(JSON.stringify(data), {
+    // 默认隐藏 marked 的友链，?all=1 显示全部（管理页面用）
+    const showAll = url.searchParams.get('all') === '1';
+    let links = data.links.map((l) => ({ ...l, image: l.image || l.avatar || '' }));
+    if (!showAll) links = links.filter((l) => !l.hidden);
+    return new Response(JSON.stringify({ links }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -94,6 +96,7 @@ export async function onRequest(context) {
           image: link.image || link.avatar || `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(link.url)}`,
           description: link.description || '',
           rss: link.rss || '',
+          hidden: link.hidden || false,
           addedAt: idx >= 0 ? data.links[idx].addedAt : new Date().toISOString(),
         };
         if (idx >= 0) {

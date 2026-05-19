@@ -199,7 +199,7 @@ curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<spa
 
 	<div class="endpoint">
 	  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/links</span></h3>
-	  <p class="desc">友链管理 API。GET 公开，POST/DELETE 需要口令。支持单条或批量操作。</p>
+	  <p class="desc">友链管理 API。GET 公开（默认过滤隐藏项，?all=1 查看全部），POST/DELETE 需要口令。支持 hidden 标记隐藏。</p>
 	  <div class="code"><span class="cmt"># 查看所有友链（无需口令）</span>
 	curl https://rssapi.usj.cc/api/links
 

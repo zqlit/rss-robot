@@ -247,6 +247,9 @@ const MANAGE_HTML = `<!DOCTYPE html>
     <input type="text" id="linkDesc" placeholder="一个很棒的博客">
     <label>RSS 订阅地址（选填）</label>
     <input type="text" id="linkRss" placeholder="https://example.com/feed">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px">
+      <input type="checkbox" id="linkHidden" style="width:auto;accent-color:var(--red)"> 隐藏（不在公开接口展示）
+    </label>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeLinkModal()">取消</button>
       <button class="btn btn-primary" id="linkSaveBtn" onclick="saveLink()">保存</button>
@@ -441,10 +444,11 @@ function renderLinkTable() {
   }
   document.getElementById('linkEmpty').style.display = 'none';
   tbody.innerHTML = links.map((l, i) => {
-    const img = l.image || l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    var img = l.image || l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    var hiddenBadge = l.hidden ? ' <span style="font-size:10px;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:1px 5px;margin-left:6px">隐藏</span>' : '';
     return '<tr>' +
       '<td><img src="' + img + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +
-      '<td class="link-name">' + (l.name || '-') + '</td>' +
+      '<td class="link-name">' + (l.name || '-') + hiddenBadge + '</td>' +
       '<td class="url">' + l.url + '</td>' +
       '<td style="font-size:12px;color:var(--muted)">' + (l.description || '') + '</td>' +
       '<td class="actions"><button class="btn btn-secondary" onclick="openEditLink(' + i + ')">编辑</button></td>' +
@@ -454,7 +458,7 @@ function renderLinkTable() {
 
 async function loadLinks() {
   try {
-    const res = await fetch('/api/links');
+    const res = await fetch('/api/links?all=1');
     const data = await res.json();
     links = data.links || [];
     document.getElementById('linkCount').textContent = links.length;
@@ -472,6 +476,7 @@ function openLinkModal() {
   document.getElementById('linkImage').value = '';
   document.getElementById('linkDesc').value = '';
   document.getElementById('linkRss').value = '';
+  document.getElementById('linkHidden').checked = false;
   document.getElementById('linkDeleteBtn').style.display = 'none';
   document.getElementById('linkModal').classList.add('active');
 }
@@ -485,6 +490,7 @@ function openEditLink(idx) {
   document.getElementById('linkImage').value = l.image || '';
   document.getElementById('linkDesc').value = l.description || '';
   document.getElementById('linkRss').value = l.rss || '';
+  document.getElementById('linkHidden').checked = !!l.hidden;
   document.getElementById('linkDeleteBtn').style.display = '';
   document.getElementById('linkModal').classList.add('active');
 }
@@ -505,6 +511,7 @@ async function saveLink() {
   if (desc) body.description = desc;
   const rss = document.getElementById('linkRss').value.trim();
   if (rss) body.rss = rss;
+  body.hidden = document.getElementById('linkHidden').checked;
   try {
     const res = await fetch('/api/links?token=' + encodeURIComponent(token), {
       method: 'POST',
