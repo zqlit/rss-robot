@@ -13,10 +13,10 @@ const HTML = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RSS API · 博客订阅聚合</title>
 <style>
-  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; }
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
-  .container { max-width: 720px; width: 100%; }
+  .container { max-width: 760px; width: 100%; }
   header { text-align: center; padding: 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
   header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: #fff; }
   header p { color: var(--muted); font-size: 15px; }
@@ -25,10 +25,11 @@ const HTML = `<!DOCTYPE html>
   .stat .num { font-size: 22px; font-weight: 700; color: #fff; }
   .stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .endpoint { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
-  .endpoint h3 { font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-  .method { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+  .endpoint h3 { font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .method { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
   .method.post { background: #1f6feb33; color: var(--accent); }
   .method.get { background: #23863633; color: var(--green); }
+  .method.delete { background: #da363333; color: var(--red); }
   .path { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 14px; color: #e6edf3; }
   .desc { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
   .code { background: #0d1117; border-radius: 6px; padding: 12px 16px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre; color: #e6edf3; margin-top: 8px; }
@@ -72,12 +73,31 @@ curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span clas
 }</div>
 </div>
 <div class="endpoint">
+  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/feeds</span></h3>
+  <p class="desc">订阅源管理 API。通过接口增删订阅源，告别手动编辑 JSON。GET 返回格式可直接设为 FEEDS_URL 供 check-feeds 使用。</p>
+  <div class="code"><span class="cmt"># 查看所有订阅源（返回 { feeds: [...] }）</span>
+curl https://rssapi.usj.cc/api/feeds
+
+<span class="cmt"># 添加订阅源（URL 已存在则覆盖更新）</span>
+curl -X POST https://rssapi.usj.cc/api/feeds \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{"url": "https://example.com", "feedTitle": "示例博客"}'</span>
+
+<span class="cmt"># 批量导入</span>
+curl -X POST https://rssapi.usj.cc/api/feeds \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{"feeds": [{ "url": "...", "feedTitle": "..." }, ...]}'</span>
+
+<span class="cmt"># 删除订阅源</span>
+curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span></div>
+</div>
+<div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/favicon</span></h3>
-  <p class="desc">自动发现并返回站点 favicon 图片。抓取目标站 HTML 解析 icon 标签，回退 /favicon.ico。结果缓存在 KV 中。</p>
+  <p class="desc">自动发现并返回站点 favicon 图片。抓取目标站 HTML 解析 icon 标签，回退 /favicon.ico。结果缓存在 KV 中 7 天。</p>
   <div class="code"><span class="cmt"># 获取 favicon 图片（可直接用作 &lt;img src&gt;）</span>
 curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
 
-<span class="cmt"># 查看发现的 favicon 原始 URL</span>
+<span class="cmt"># 查看发现的原始 favicon URL（不返回图片）</span>
 curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>&<span class="key">meta</span>=<span class="str">1</span></div>
 </div>
 <div class="endpoint">
