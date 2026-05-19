@@ -66,12 +66,15 @@ const LOGIN_HTML = `<!DOCTYPE html>
 async function login() {
   const pwd = document.getElementById('pwd').value;
   if (!pwd) return;
-  // 尝试用口令作为 token 访问 API
-  const res = await fetch('/api/feeds?token=' + encodeURIComponent(pwd));
-  if (res.ok) {
-    document.cookie = 'site_token=' + pwd + ';path=/;max-age=2592000;SameSite=Lax';
-    location.href = '/feed';
-  } else {
+  try {
+    const res = await fetch('/api/auth?token=' + encodeURIComponent(pwd));
+    if (res.ok) {
+      document.cookie = 'site_token=' + pwd + ';path=/;max-age=2592000;SameSite=Lax';
+      location.href = '/feed?token=' + encodeURIComponent(pwd);
+    } else {
+      document.getElementById('err').style.display = 'block';
+    }
+  } catch {
     document.getElementById('err').style.display = 'block';
   }
 }

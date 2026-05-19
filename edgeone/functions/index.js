@@ -70,7 +70,7 @@ async function login() {
     const res = await fetch('/api/auth?token=' + encodeURIComponent(pwd));
     if (res.ok) {
       document.cookie = 'site_token=' + pwd + ';path=/;max-age=2592000;SameSite=Lax';
-      location.reload();
+      location.href = '/?token=' + encodeURIComponent(pwd);
     } else {
       document.getElementById('err').style.display = 'block';
     }
