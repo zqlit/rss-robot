@@ -93,7 +93,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d2991d; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; padding: 40px 20px; }
-  .container { max-width: 900px; margin: 0 auto; }
+  .container { max-width: 960px; margin: 0 auto; }
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
   header h1 { font-size: 24px; color: #fff; }
   header .actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -104,18 +104,26 @@ const MANAGE_HTML = `<!DOCTYPE html>
   .btn-secondary:hover { background: #1c2333; }
   .btn-danger { background: var(--card); color: var(--red); border: 1px solid var(--red); }
   .btn-danger:hover { background: #49020233; }
-  .stats { display: flex; gap: 12px; margin-bottom: 24px; }
+  .stats { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
   .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; }
   .stat .num { font-size: 20px; font-weight: 700; color: #fff; }
   .stat .label { font-size: 11px; color: var(--muted); }
+  .stat.alive .num { color: var(--green); }
+  .stat.dead .num { color: var(--red); }
   table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   th, td { padding: 12px 16px; text-align: left; font-size: 13px; }
   th { background: #1c2333; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
   td { border-top: 1px solid var(--border); }
   td.url { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: var(--accent); word-break: break-all; }
-  td.title { color: #fff; font-weight: 500; }
+  td.title { color: #fff; font-weight: 500; display: flex; align-items: center; }
   td.actions { white-space: nowrap; }
   td.actions button { padding: 4px 10px; font-size: 12px; margin-right: 6px; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+  .status-dot.alive { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.dead { background: var(--red); }
+  .status-dot.checking { background: var(--yellow); animation: pulse 0.8s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .latency { font-size: 11px; color: var(--muted); margin-left: 6px; }
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 100%; max-width: 480px; }
@@ -132,6 +140,8 @@ const MANAGE_HTML = `<!DOCTYPE html>
   .tab { display: inline-flex; gap: 2px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
   .tab button { padding: 6px 16px; border: none; background: none; color: var(--muted); border-radius: 6px; cursor: pointer; font-size: 13px; }
   .tab button.active { background: #1f6feb; color: #fff; }
+  .feed-url-bar { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .feed-url-bar code { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -140,12 +150,21 @@ const MANAGE_HTML = `<!DOCTYPE html>
   <h1>RSS 订阅源管理</h1>
   <div class="actions">
     <a href="/" class="btn btn-secondary" target="_blank">API 文档</a>
+    <button class="btn btn-secondary" onclick="checkHealth()" id="healthBtn">检测存活</button>
     <button class="btn btn-primary" onclick="openAddModal()">+ 添加订阅源</button>
   </div>
 </header>
 
+<div class="feed-url-bar">
+  <span style="color:var(--muted)">订阅地址</span>
+  <code id="feedUrlText">https://rssapi.usj.cc/api/feeds</code>
+  <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="copyFeedUrl()">复制</button>
+</div>
+
 <div class="stats">
   <div class="stat"><div class="num" id="feedCount">0</div><div class="label">订阅源</div></div>
+  <div class="stat alive" id="aliveStat" style="display:none"><div class="num" id="aliveCount">0</div><div class="label">存活</div></div>
+  <div class="stat dead" id="deadStat" style="display:none"><div class="num" id="deadCount">0</div><div class="label">异常</div></div>
 </div>
 
 <div class="tab">
@@ -154,7 +173,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 </div>
 
 <div id="tab-feeds">
-  <table><thead><tr><th>博客名称</th><th>URL</th><th style="width:100px">操作</th></tr></thead><tbody id="feedTableBody"></tbody></table>
+  <table><thead><tr><th style="width:220px">博客名称</th><th>URL</th><th style="width:100px">操作</th></tr></thead><tbody id="feedTableBody"></tbody></table>
   <div class="empty" id="emptyMsg" style="display:none"><h3>暂无订阅源</h3><p>点击上方按钮添加第一个</p></div>
 </div>
 
@@ -208,7 +227,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 let token = '';
 const cMatch = document.cookie.match(/site_token=([^;]+)/);
 if (cMatch) token = cMatch[1];
-if (!token) { location.href = '/feed'; } // force login
+if (!token) { location.href = '/feed'; }
 
 let feeds = [];
 let editingUrl = null;
@@ -221,10 +240,42 @@ function showToast(msg, isError) {
   setTimeout(() => t.style.display = 'none', 2500);
 }
 
+function copyFeedUrl() {
+  navigator.clipboard.writeText('https://rssapi.usj.cc/api/feeds').then(() => showToast('已复制订阅地址'));
+}
+
 function showTab(name) {
   document.querySelectorAll('.tab button').forEach((b, i) => b.classList.toggle('active', (i === 0 && name === 'feeds') || (i === 1 && name === 'password')));
   document.getElementById('tab-feeds').style.display = name === 'feeds' ? '' : 'none';
   document.getElementById('tab-password').style.display = name === 'password' ? '' : 'none';
+}
+
+function renderTable(healthMap) {
+  const tbody = document.getElementById('feedTableBody');
+  if (feeds.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('emptyMsg').style.display = '';
+    return;
+  }
+  document.getElementById('emptyMsg').style.display = 'none';
+  tbody.innerHTML = feeds.map((f, i) => {
+    const h = healthMap ? healthMap[f.url] : null;
+    let dot = '';
+    let latency = '';
+    if (h) {
+      if (h.ok) {
+        dot = '<span class="status-dot alive" title="HTTP ' + h.status + '"></span>';
+        latency = '<span class="latency">' + h.latency + 'ms</span>';
+      } else {
+        dot = '<span class="status-dot dead" title="' + (h.error || 'HTTP ' + h.status) + '"></span>';
+      }
+    }
+    return '<tr>' +
+      '<td class="title">' + dot + (f.feedTitle || '-') + latency + '</td>' +
+      '<td class="url">' + f.url + '</td>' +
+      '<td class="actions"><button class="btn btn-secondary" onclick="openEditModal(' + i + ')">编辑</button></td>' +
+      '</tr>';
+  }).join('');
 }
 
 async function loadFeeds() {
@@ -234,22 +285,39 @@ async function loadFeeds() {
     const data = await res.json();
     feeds = data.feeds || [];
     document.getElementById('feedCount').textContent = feeds.length;
-    const tbody = document.getElementById('feedTableBody');
-    if (feeds.length === 0) {
-      tbody.innerHTML = '';
-      document.getElementById('emptyMsg').style.display = '';
-      return;
-    }
-    document.getElementById('emptyMsg').style.display = 'none';
-    tbody.innerHTML = feeds.map((f, i) => \`<tr>
-      <td class="title">\${f.feedTitle || '-'}</td>
-      <td class="url">\${f.url}</td>
-      <td class="actions">
-        <button class="btn btn-secondary" onclick="openEditModal(\${i})">编辑</button>
-      </td>
-    </tr>\`).join('');
+    renderTable(null);
   } catch (err) {
     showToast('加载失败: ' + err.message, true);
+  }
+}
+
+async function checkHealth() {
+  const btn = document.getElementById('healthBtn');
+  btn.textContent = '检测中...';
+  btn.disabled = true;
+  // 先给全部行设为 checking 状态
+  renderTable(null);
+  const dots = document.querySelectorAll('.status-dot');
+  // 不显示 checking 状态（没有 h 时无 dot），直接开始
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    const healthMap = {};
+    for (const r of data.results) {
+      healthMap[r.url] = r;
+    }
+    renderTable(healthMap);
+    document.getElementById('aliveStat').style.display = '';
+    document.getElementById('deadStat').style.display = '';
+    document.getElementById('aliveCount').textContent = data.alive;
+    document.getElementById('deadCount').textContent = data.dead;
+    btn.textContent = '检测存活';
+    btn.disabled = false;
+    showToast('检测完成: 存活 ' + data.alive + ', 异常 ' + data.dead);
+  } catch (err) {
+    btn.textContent = '检测存活';
+    btn.disabled = false;
+    showToast('检测失败: ' + err.message, true);
   }
 }
 

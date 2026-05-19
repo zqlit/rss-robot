@@ -184,6 +184,25 @@ curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class=
 </div>
 
 <div class="endpoint">
+  <h3><span class="method get">GET</span><span class="path">/api/health</span></h3>
+  <p class="desc">检测订阅源站点存活状态。<strong style="color:var(--green)">无需口令</strong>。HEAD 请求目标 URL，返回状态码和延迟。</p>
+  <div class="code"><span class="cmt"># 批量检测所有订阅源</span>
+curl https://rssapi.usj.cc/api/health
+
+<span class="cmt"># 检测单个站点</span>
+curl https://rssapi.usj.cc/api/health?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
+
+<span class="cmt"># 响应示例</span>
+{
+  "<span class="key">total</span>": 38, "<span class="key">alive</span>": 35, "<span class="key">dead</span>": 3,
+  "<span class="key">results</span>": [
+    { "<span class="key">url</span>": "...", "<span class="key">status</span>": 200, "<span class="key">ok</span>": true, "<span class="key">latency</span>": 234 },
+    { "<span class="key">url</span>": "...", "<span class="key">status</span>": 0, "<span class="key">ok</span>": false, "<span class="key">error</span>": "timeout" }
+  ]
+}</div>
+</div>
+
+<div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/proxy</span></h3>
   <p class="desc">RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。</p>
   <div class="code"><span class="cmt"># 代理抓取</span>

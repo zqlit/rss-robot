@@ -8,7 +8,15 @@
       "Bash(gh run *)",
       "Bash(PROXY_FUNCTION_URL=https://rssapi.usj.cc/api/proxy node -e ' *)",
       "WebFetch(domain:pages.edgeone.ai)",
-      "WebFetch(domain:open.motues.top)"
+      "WebFetch(domain:open.motues.top)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "WebFetch(domain:openlist.usj.cc)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Total: {len\\(d.get\\(\\\\\"feeds\\\\\",[]\\)\\)} feeds'\\)\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
