@@ -1,2 +1,199 @@
 <!DOCTYPE html>
-<html><body>RSS Proxy</body></html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSS API · 博客订阅聚合</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  .container { max-width: 720px; width: 100%; }
+  header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .stats {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 24px;
+    text-align: center;
+  }
+  .stat .num { font-size: 22px; font-weight: 700; color: #fff; }
+  .stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .endpoint {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .endpoint h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .method {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .method.post { background: #1f6feb33; color: var(--accent); }
+  .method.get  { background: #23863633; color: var(--green); }
+  .path {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    color: #e6edf3;
+  }
+  .desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .code {
+    background: #0d1117;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: #e6edf3;
+    margin-top: 8px;
+  }
+  .code .key { color: var(--accent); }
+  .code .str { color: #a5d6ff; }
+  .code .cmt { color: #6e7681; }
+  footer {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>RSS API</h1>
+  <p>博客 RSS 订阅聚合 · 数据由 GitHub Action 定时抓取</p>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="num" id="feedCount">-</div>
+    <div class="label">订阅源</div>
+  </div>
+  <div class="stat">
+    <div class="num" id="articleCount">-</div>
+    <div class="label">最新文章</div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <h3>
+    <span class="method get">GET</span>
+    <span class="path">/api/results</span>
+  </h3>
+  <p class="desc">获取所有博客最新文章，支持按博客筛选和限制文章数。</p>
+  <div class="code"><span class="cmt"># 获取全部</span>
+curl https://rssapi.usj.cc/api/results
+
+<span class="cmt"># 筛选特定博客</span>
+curl https://rssapi.usj.cc/api/results?<span class="key">feed</span>=<span class="str">刘郎阁</span>
+
+<span class="cmt"># 每博客只取最新 3 篇</span>
+curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
+</div>
+</div>
+
+<div class="endpoint">
+  <h3>
+    <span class="method post">POST</span>
+    <span class="path">/api/proxy</span>
+  </h3>
+  <p class="desc">RSS 抓取代理。通过国内节点抓取被境外封锁的博客。</p>
+  <div class="code"><span class="cmt"># 代理抓取目标 URL</span>
+curl -X POST https://rssapi.usj.cc/api/proxy \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span></div>
+</div>
+
+<div class="endpoint">
+  <h3>
+    <span class="method post">POST</span>
+    <span class="path">/api/update</span>
+  </h3>
+  <p class="desc">接收抓取结果并存入 KV（由 GitHub Action 自动调用，无需手动触发）。</p>
+</div>
+
+<footer>
+  数据来源：<a href="https://github.com/cheungray123/rss-robot" target="_blank">RSS Robot</a>
+  · 代理服务：<a href="https://scfapi.usj.cc" target="_blank">SCF 国内节点</a>
+</footer>
+
+</div>
+<script>
+// 尝试从 API 拉取实时统计数据
+fetch('/api/results')
+  .then(r => r.json())
+  .then(data => {
+    if (data.feeds) {
+      document.getElementById('feedCount').textContent = data.feeds.length;
+      let total = 0;
+      data.feeds.forEach(f => total += (f.articles || []).length);
+      document.getElementById('articleCount').textContent = total;
+    }
+  })
+  .catch(() => {
+    document.getElementById('feedCount').textContent = '?';
+    document.getElementById('articleCount').textContent = '?';
+  });
+</script>
+</body>
+</html>
