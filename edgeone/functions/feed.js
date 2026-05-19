@@ -241,8 +241,8 @@ const MANAGE_HTML = `<!DOCTYPE html>
     <input type="text" id="linkName" placeholder="示例博客">
     <label>站点 URL</label>
     <input type="text" id="linkUrl" placeholder="https://example.com">
-    <label>头像 URL（留空自动获取 favicon）</label>
-    <input type="text" id="linkAvatar" placeholder="自动获取">
+    <label>头像图片 URL（留空自动获取 favicon）</label>
+    <input type="text" id="linkImage" placeholder="自动获取">
     <label>描述</label>
     <input type="text" id="linkDesc" placeholder="一个很棒的博客">
     <label>RSS 订阅地址（选填）</label>
@@ -441,9 +441,9 @@ function renderLinkTable() {
   }
   document.getElementById('linkEmpty').style.display = 'none';
   tbody.innerHTML = links.map((l, i) => {
-    const avatar = l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    const img = l.image || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
     return '<tr>' +
-      '<td><img src="' + avatar + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +
+      '<td><img src="' + img + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +
       '<td class="link-name">' + (l.name || '-') + '</td>' +
       '<td class="url">' + l.url + '</td>' +
       '<td style="font-size:12px;color:var(--muted)">' + (l.description || '') + '</td>' +
@@ -469,7 +469,7 @@ function openLinkModal() {
   document.getElementById('linkModalTitle').textContent = '添加友链';
   document.getElementById('linkName').value = '';
   document.getElementById('linkUrl').value = '';
-  document.getElementById('linkAvatar').value = '';
+  document.getElementById('linkImage').value = '';
   document.getElementById('linkDesc').value = '';
   document.getElementById('linkRss').value = '';
   document.getElementById('linkDeleteBtn').style.display = 'none';
@@ -482,7 +482,7 @@ function openEditLink(idx) {
   document.getElementById('linkModalTitle').textContent = '编辑友链';
   document.getElementById('linkName').value = l.name || '';
   document.getElementById('linkUrl').value = l.url || '';
-  document.getElementById('linkAvatar').value = l.avatar || '';
+  document.getElementById('linkImage').value = l.image || '';
   document.getElementById('linkDesc').value = l.description || '';
   document.getElementById('linkRss').value = l.rss || '';
   document.getElementById('linkDeleteBtn').style.display = '';
@@ -499,8 +499,8 @@ async function saveLink() {
   if (!name && !url) { showToast('名称和 URL 至少填一个', true); return; }
   if (!url) { showToast('URL 不能为空', true); return; }
   const body = { name: name || url, url: url };
-  const avatar = document.getElementById('linkAvatar').value.trim();
-  if (avatar) body.avatar = avatar;
+  const image = document.getElementById('linkImage').value.trim();
+  if (image) body.image = image;
   const desc = document.getElementById('linkDesc').value.trim();
   if (desc) body.description = desc;
   const rss = document.getElementById('linkRss').value.trim();

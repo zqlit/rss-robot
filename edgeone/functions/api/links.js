@@ -89,7 +89,7 @@ export async function onRequest(context) {
         const entry = {
           name: link.name || link.title || '',
           url: link.url,
-          avatar: link.avatar || `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(link.url)}`,
+          image: link.image || link.avatar || `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(link.url)}`,
           description: link.description || '',
           rss: link.rss || '',
           addedAt: idx >= 0 ? data.links[idx].addedAt : new Date().toISOString(),
