@@ -4,7 +4,9 @@
       "Bash(node --check check-feeds.js)",
       "Bash(node --check proxy-function/index.js)",
       "Bash(node *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(gh run *)",
+      "Bash(PROXY_FUNCTION_URL=https://rssapi.usj.cc/api/proxy node -e ' *)"
     ]
   }
 }

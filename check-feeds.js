@@ -361,7 +361,9 @@ async function resolveFeed(feedConfig) {
 	let response;
 	try {
 		response = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
+		if (useProxy) console.log(`  通过代理抓取`);
 	} catch (err) {
+		console.log(`  直连失败: ${err.message}，尝试 Feed 发现...`);
 		// 请求失败，尝试当作网页发现 Feed
 		try {
 			const htmlResp = await fetchUrl(url, REQUEST_TIMEOUT, useProxy);
@@ -399,7 +401,7 @@ async function resolveFeed(feedConfig) {
 			console.log(`  格式: 自定义 JSON${feedConfig.path ? ` (path: ${feedConfig.path})` : ''}`);
 			return parseCustomJson(json, feedConfig);
 		} catch (err) {
-			console.error(`  ❌ JSON 解析失败: ${err.message}`);
+			console.error(`  ❌ JSON 解析失败: ${err.message} (contentType: ${contentType}, text 前100字: ${text.substring(0, 100).replace(/\n/g, ' ')})`);
 			return null;
 		}
 	}
