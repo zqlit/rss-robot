@@ -1,7 +1,6 @@
 name: Check RSS Feeds
 
 on:
-  # 每小时检查一次
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
@@ -44,7 +43,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet data/seen-articles.json || \
-            git add data/seen-articles.json && \
-            git commit -m "chore: update seen articles" && \
-            git push
+          
+          if git diff --quiet data/seen-articles.json; then
+            echo "No changes"
+            exit 0
+          fi
+          
+          git add data/seen-articles.json
+          git commit -m "chore: update seen articles"
+          git pull origin master --no-edit
+          git push
