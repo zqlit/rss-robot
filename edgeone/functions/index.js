@@ -29,7 +29,7 @@ export async function onRequest(context) {
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Set-Cookie': `site_token=${token}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`,
+      'Set-Cookie': `site_token=${token}; Path=/; Max-Age=2592000; SameSite=Lax`,
     },
   });
 }
