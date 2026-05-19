@@ -14,8 +14,8 @@ export async function onRequest(context) {
     const data = await request.json();
 
     // 存入 KV（如果已绑定），7 天过期
-    if (env.RSS_KV) {
-      await env.RSS_KV.put('latest', JSON.stringify(data), { expirationTtl: 604800 });
+    if (typeof RSS_KV !== 'undefined') {
+      await RSS_KV.put('latest', JSON.stringify(data), { expirationTtl: 604800 });
     }
 
     return new Response(JSON.stringify({ ok: true }), {

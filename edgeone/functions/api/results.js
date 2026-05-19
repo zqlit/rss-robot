@@ -8,7 +8,7 @@
 export async function onRequest(context) {
   const { request, env } = context;
 
-  if (!env.RSS_KV) {
+  if (typeof RSS_KV === 'undefined') {
     return new Response(JSON.stringify({ error: 'KV not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -16,7 +16,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const raw = await env.RSS_KV.get('latest');
+    const raw = await RSS_KV.get('latest');
     if (!raw) {
       return new Response(JSON.stringify({ total: 0, feeds: [], timestamp: null }), {
         status: 200,
