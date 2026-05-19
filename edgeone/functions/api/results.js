@@ -1,25 +1,34 @@
 // GET /api/results — 读取 KV 中缓存的最近抓取结果
 // 可选参数: ?host=blog.example.com 筛选特定博客
 
-export async function onRequestGet({ request, env }) {
-  if (!env?.RSS_KV) {
-    return Response.json({ error: 'KV not configured' }, { status: 500 });
-  }
-
-  const url = new URL(request.url);
-  const host = url.searchParams.get('host');
-
+export async function onRequest(context) {
   try {
-    if (host) {
-      // 读取指定博客
-      const raw = await env.RSS_KV.get(`feed:${host}`);
-      if (!raw) {
-        return Response.json({ error: 'not found' }, { status: 404 });
-      }
-      return Response.json(JSON.parse(raw));
+    const { request, env } = context;
+
+    if (!env.RSS_KV) {
+      return new Response(JSON.stringify({ error: 'KV not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // 列出所有缓存 key（最多 100 条）
+    const url = new URL(request.url);
+    const host = url.searchParams.get('host');
+
+    if (host) {
+      const raw = await env.RSS_KV.get(`feed:${host}`);
+      if (!raw) {
+        return new Response(JSON.stringify({ error: 'not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(raw, {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const list = await env.RSS_KV.list({ prefix: 'feed:', limit: 100 });
     const results = [];
     for (const key of list.keys) {
@@ -27,7 +36,6 @@ export async function onRequestGet({ request, env }) {
       if (raw) {
         try {
           const data = JSON.parse(raw);
-          // 不返回 body，列表接口只返回元数据
           results.push({
             host: key.name.replace('feed:', ''),
             url: data.url,
@@ -36,13 +44,22 @@ export async function onRequestGet({ request, env }) {
             fetchedAt: data.fetchedAt,
           });
         } catch {
-          // skip corrupted entries
+          // skip
         }
       }
     }
 
-    return Response.json({ count: results.length, results });
+    return new Response(JSON.stringify({ count: results.length, results }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return new Response(
+      JSON.stringify({ error: err.message, stack: err.stack }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }
