@@ -154,6 +154,29 @@ curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span clas
 </div>
 
 <div class="endpoint">
+  <h3><span class="method get">GET</span><span class="path">/api/articles</span></h3>
+  <p class="desc">按发布时间排序的所有文章（跨博客混合）。适合友圈/时间线场景。<strong style="color:var(--green)">无需口令</strong></p>
+  <div class="code"><span class="cmt"># 获取最新 50 篇（默认）</span>
+curl https://rssapi.usj.cc/api/articles
+
+<span class="cmt"># 获取最新 100 篇</span>
+curl https://rssapi.usj.cc/api/articles?<span class="key">limit</span>=<span class="str">100</span>
+
+<span class="cmt"># 响应示例</span>
+{
+  "<span class="key">total</span>": 380,
+  "<span class="key">articles</span>": [
+    {
+      "<span class="key">title</span>": "...", "<span class="key">link</span>": "...", "<span class="key">pubDate</span>": "...",
+      "<span class="key">feedName</span>": "<span class="str">吾柯</span>",
+      "<span class="key">siteUrl</span>": "<span class="str">https://blog.keepke.com</span>",
+      "<span class="key">favicon</span>": "<span class="str">https://rssapi.usj.cc/api/favicon?url=...</span>"
+    }
+  ]
+}</div>
+</div>
+
+<div class="endpoint">
   <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/feeds</span></h3>
   <p class="desc">订阅源管理 API。通过接口增删订阅源。POST/DELETE 需要口令。</p>
   <div class="code"><span class="cmt"># 查看所有订阅源（无需口令，返回 { feeds: [...] }）</span>
