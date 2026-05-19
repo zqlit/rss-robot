@@ -1018,6 +1018,7 @@ async function main() {
 
 	// 3. 逐个抓取
 	const allNewArticles = [];
+	const allFetchedArticles = []; // 全部文章（用于 KV 上报）
 
 	for (const feedConfig of feeds) {
 		const url = typeof feedConfig === 'string' ? feedConfig : feedConfig.url;
@@ -1034,6 +1035,7 @@ async function main() {
 
 			// 筛选新文章（最多取最新 10 篇检查）
 			const recentArticles = articles.slice(0, 10);
+			allFetchedArticles.push(...recentArticles.map((a) => ({ ...a, feedTitle: feedTitle || '未知' })));
 			const newOnes = recentArticles.filter((a) => !seenData.articles[a.link]);
 
 			if (newOnes.length > 0) {
@@ -1075,7 +1077,7 @@ async function main() {
 	saveOutputToJson(recentNew, allNewArticles);
 
 	// 上报结果到 EdgeOne KV（如果配置了）
-	await uploadToEdgeOne(allNewArticles);
+	await uploadToEdgeOne(allFetchedArticles);
 
 	// 5. 清理旧记录
 	const entries = Object.entries(seenData.articles);
