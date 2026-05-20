@@ -69,6 +69,30 @@ async function getAccessToken(appId, appSecret) {
   return json.access_token;
 }
 
+// 手动构造 multipart/form-data body（EdgeOne Functions 中 FormData+Blob 不可靠）
+function buildMultipartBody(fieldName, filename, data, contentType) {
+  const boundary = '----WechatMaterial' + Date.now();
+  const encoder = new TextEncoder();
+
+  const parts = [];
+  parts.push(encoder.encode(`--${boundary}\r\n`));
+  parts.push(encoder.encode(`Content-Disposition: form-data; name="${fieldName}"; filename="${filename}"\r\n`));
+  parts.push(encoder.encode(`Content-Type: ${contentType}\r\n\r\n`));
+  parts.push(new Uint8Array(data));
+  parts.push(encoder.encode('\r\n'));
+  parts.push(encoder.encode(`--${boundary}--\r\n`));
+
+  const totalLen = parts.reduce((acc, p) => acc + p.length, 0);
+  const body = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const p of parts) {
+    body.set(p, offset);
+    offset += p.length;
+  }
+
+  return { body, boundary };
+}
+
 // 上传封面图到微信永久素材库 → 返回 media_id（用于 thumb_media_id）
 // API: POST /cgi-bin/material/add_material?type=image  限制: ≤10MB, bmp/png/jpeg/jpg/gif
 async function uploadThumbImage(accessToken, imageUrl) {
@@ -78,13 +102,17 @@ async function uploadThumbImage(accessToken, imageUrl) {
   }
   const buffer = await downloadRes.arrayBuffer();
   const contentType = downloadRes.headers.get('content-type') || 'image/jpeg';
+  const ext = contentType.split('/')[1] || 'jpg';
 
-  const formData = new FormData();
-  formData.append('media', new Blob([buffer], { type: contentType }), 'cover.jpg');
+  const { body, boundary } = buildMultipartBody('media', `cover.${ext}`, buffer, contentType);
 
   const res = await fetch(
     `https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=${accessToken}&type=image`,
-    { method: 'POST', body: formData }
+    {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+      body,
+    }
   );
   const json = await res.json();
   if (json.errcode) {
@@ -102,13 +130,17 @@ async function uploadContentImage(accessToken, imageUrl) {
   }
   const buffer = await downloadRes.arrayBuffer();
   const contentType = downloadRes.headers.get('content-type') || 'image/jpeg';
+  const ext = contentType.split('/')[1] || 'jpg';
 
-  const formData = new FormData();
-  formData.append('media', new Blob([buffer], { type: contentType }), 'content.jpg');
+  const { body, boundary } = buildMultipartBody('media', `content.${ext}`, buffer, contentType);
 
   const res = await fetch(
     `https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=${accessToken}`,
-    { method: 'POST', body: formData }
+    {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+      body,
+    }
   );
   const json = await res.json();
   if (json.errcode) {
