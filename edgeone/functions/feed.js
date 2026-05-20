@@ -39,7 +39,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>登录 · 互联中心</title>
+<title>登录 · UAPI管理系统</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,7 +56,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
 <div class="login-box">
-  <h1>互联中心</h1>
+  <h1>UAPI管理系统</h1>
   <p>请输入访问口令</p>
   <input type="password" id="pwd" placeholder="口令" autofocus>
   <button onclick="login()">进入</button>
@@ -88,7 +88,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>互联中心 · RSS Robot</title>
+<title>UAPI管理系统</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --yellow: #d2991d; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -149,7 +149,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 <body>
 <div class="container">
 <header>
-  <h1>互联中心</h1>
+  <h1>UAPI管理系统</h1>
   <div class="actions">
     <a href="/" class="btn btn-secondary" target="_blank">API 文档</a>
     <button class="btn btn-secondary" onclick="checkHealth()" id="healthBtn">检测存活</button>

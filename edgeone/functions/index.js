@@ -39,7 +39,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RSS API</title>
+<title>UAPI管理系统</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,7 +56,7 @@ const LOGIN_HTML = `<!DOCTYPE html>
 </head>
 <body>
 <div class="login-box">
-  <h1>RSS API</h1>
+  <h1>UAPI管理系统</h1>
   <p>请输入访问口令</p>
   <input type="password" id="pwd" placeholder="口令" autofocus>
   <button onclick="login()">进入</button>
@@ -86,7 +86,7 @@ const DOCS_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>互联中心 · 博客订阅聚合</title>
+<title>UAPI管理系统</title>
 <style>
   :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -121,9 +121,9 @@ const DOCS_HTML = `<!DOCTYPE html>
 <body>
 <div class="container">
 <header>
-  <h1>互联中心</h1>
+  <h1>UAPI管理系统</h1>
   <p>博客 RSS 订阅聚合 · 友链管理 · 数据每小时自动刷新</p>
-  <div class="nav-links"><a href="/feed">互联中心管理</a></div>
+  <div class="nav-links"><a href="/feed">UAPI 管理</a></div>
 </header>
 <div class="stats">
   <div class="stat"><div class="num" id="feedCount">-</div><div class="label">订阅源</div></div>
@@ -334,8 +334,8 @@ curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</
 </div>
 
 <footer>
-  管理：<a href="/feed">互联中心</a>
-  · 数据来源：<a href="https://github.com/cheungray123/rss-robot" target="_blank">RSS Robot</a>
+  管理：<a href="/feed">UAPI</a>
+  · 数据来源：<a href="https://github.com/cheungray123/rss-robot" target="_blank">UAPI</a>
   · 代理：<a href="https://scfapi.usj.cc" target="_blank">SCF 国内节点</a>
   · 托管：<a href="https://pages.edgeone.ai" target="_blank">EdgeOne Pages</a>
 </footer>
