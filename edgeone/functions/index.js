@@ -248,11 +248,84 @@ curl https://rssapi.usj.cc/api/health?<span class="key">url</span>=<span class="
 
 <div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/proxy</span></h3>
-  <p class="desc">RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。</p>
-  <div class="code"><span class="cmt"># 代理抓取</span>
+  <p class="desc">RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。<br>EdgeOne 节点：<code style="color:var(--accent)">rssapi.usj.cc/api/proxy</code> ｜ 腾讯云 SCF 国内节点：<code style="color:var(--accent)">scfapi.usj.cc</code></p>
+  <div class="code"><span class="cmt"># 方式一：EdgeOne Pages 代理（rssapi.usj.cc，需口令）</span>
 curl -X POST https://rssapi.usj.cc/api/proxy?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
-  -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span></div>
+  -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span>
+
+<span class="cmt"># 方式二：腾讯云 SCF 国内代理（scfapi.usj.cc，无需口令）</span>
+curl -X POST https://scfapi.usj.cc/ \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span>
+
+<span class="cmt"># SCF 代理部署在腾讯云成都区，纯国内网络环境</span>
+<span class="cmt"># check-feeds.js 中设置 PROXY_FUNCTION_URL=https://scfapi.usj.cc 即可启用</span>
+
+<span class="cmt"># 响应示例</span>
+{
+  "<span class="key">ok</span>": true,
+  "<span class="key">status</span>": 200,
+  "<span class="key">contentType</span>": "<span class="str">application/rss+xml</span>",
+  "<span class="key">body</span>": "<span class="str">&lt;?xml version=\"1.0\"...</span>"
+}</div>
+</div>
+
+<div class="endpoint">
+  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="path">/api/wechat-material</span></h3>
+  <p class="desc">同步文章到微信公众号草稿箱（调用 draft/add，不群发）。POST 需要口令。<br>封面图自动上传到永久素材库，文内图片自动上传到微信 CDN。</p>
+  <div class="code"><span class="cmt"># 查看微信配置状态（无需口令）</span>
+curl https://rssapi.usj.cc/api/wechat-material
+
+<span class="cmt"># 首次使用：同时传入凭证和文章（appId/appSecret 会自动保存到 KV）</span>
+curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{
+  "appId": "wx1234567890",
+  "appSecret": "abc123...",
+  "articles": [{
+    "title": "文章标题（最长32字）",
+    "thumb_media_url": "https://example.com/cover.jpg",
+    "author": "作者名（最长16字）",
+    "digest": "文章摘要（最长128字）",
+    "show_cover_pic": 1,
+    "content": "&lt;h1&gt;文章正文 HTML&lt;/h1&gt;",
+    "content_source_url": "https://example.com/original-article",
+    "content_image_urls": [
+      { "original_url": "https://example.com/img.jpg" }
+    ],
+    "need_open_comment": 0,
+    "only_fans_can_comment": 0
+  }]
+}'</span>
+
+<span class="cmt"># 后续调用可省略 appId/appSecret（已保存到 KV）</span>
+curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{
+  "articles": [{
+    "title": "第二篇文章",
+    "thumb_media_id": "已上传的永久media_id",
+    "content": "&lt;p&gt;内容&lt;/p&gt;",
+    "content_source_url": "https://example.com/post-2"
+  }]
+}'</span>
+
+<span class="cmt"># --- 字段说明 ---</span>
+<span class="cmt"># thumb_media_url   — 封面图 URL，自动上传到永久素材库（≤10MB, bmp/png/jpg/gif）</span>
+<span class="cmt"># thumb_media_id    — 已有的永久素材 media_id（与上一个二选一）</span>
+<span class="cmt"># content_image_urls — 文内图片 [{original_url}], 自动上传到微信 CDN 并替换</span>
+<span class="cmt">#                     content 中的链接（≤1MB, 仅 jpg/png）</span>
+<span class="cmt"># need_open_comment — 打开评论: 0=关 1=开（默认 0）</span>
+<span class="cmt"># only_fans_can_comment — 评论仅粉丝: 0=否 1=是（默认 0）</span>
+<span class="cmt"># 官方文档: https://developers.weixin.qq.com/doc/service/api/draftbox/draftmanage/api_draft_add</span>
+
+<span class="cmt"># 响应示例</span>
+{
+  "<span class="key">ok</span>": true,
+  "<span class="key">media_id</span>": "<span class="str">abc123def456</span>",
+  "<span class="key">message</span>": "<span class="str">已同步 1 篇文章到公众号草稿箱</span>"
+}</div>
 </div>
 
 <div class="endpoint">
