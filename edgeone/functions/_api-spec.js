@@ -263,6 +263,20 @@ curl -X POST https://scfapi.usj.cc/ \\
   {
     tag: 'system',
     method: 'GET',
+    path: '/api/random-image',
+    auth: false,
+    summary: '随机返回文件夹中的图片',
+    params: [
+      { name: 'folder', type: 'string', desc: '文件夹名称，默认 default' },
+      { name: 'meta', type: 'string', desc: '传 1 返回 JSON { url, folder, total }' },
+      { name: 'list', type: 'string', desc: '传 1 列出所有文件夹' },
+    ],
+    note: '302 重定向到随机图片 URL。meta=1 返回 JSON。POST 需口令添加图片：{ urls: ["https://...", ...] } ?folder=xxx',
+    curl: 'curl -L "https://api.usj.cc/api/random-image?folder=wallpaper"\ncurl "https://api.usj.cc/api/random-image?folder=wallpaper&meta=1"',
+  },
+  {
+    tag: 'system',
+    method: 'GET',
     path: '/api/auth',
     auth: false,
     summary: 'GET 验证口令 / POST 修改口令',

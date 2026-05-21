@@ -66,7 +66,7 @@ const endpoints = [
     response:'{"ok":true,"media_id":"abc123def456","message":"已同步 1 篇文章到公众号草稿箱"}',errors:[200,400,401,500],
     curl:'curl -X POST "https://api.usj.cc/api/wechat-material?token=xxx" -H "Content-Type: application/json" -d \'{"articles":[{"title":"标题","thumb_media_url":"https://...","content":"<p>正文</p>","content_source_url":"https://..."}]}\'' },
   // === 系统 ===
-  { tag:'system', method:'GET', path:'/api/auth', auth:false, summary:'GET 验证口令 / POST 修改口令', note:'POST 需 { oldPassword, newPassword }，新口令留空清除保护。' },
+  { tag:'system', method:'GET', path:'/api/random-image', auth:false, summary:'随机返回文件夹中的图片', params:[{ name:'folder', type:'string', desc:'文件夹名称，默认 default' },{ name:'meta', type:'string', desc:'传 1 返回 JSON { url, folder, total }' },{ name:'list', type:'string', desc:'传 1 列出所有文件夹' }], note:'302 重定向到随机图片 URL。meta=1 返回 JSON。POST { urls: [...] }?folder=xxx 需口令添加。', curl:'curl -L \"https://api.usj.cc/api/random-image?folder=wallpaper\"\ncurl \"https://api.usj.cc/api/random-image?folder=wallpaper&meta=1\"' }, { tag:'system', method:'GET', path:'/api/auth', auth:false, summary:'GET 验证口令 / POST 修改口令', note:'POST 需 { oldPassword, newPassword }，新口令留空清除保护。' },
   { tag:'system', method:'GET', path:'/api/docs', auth:true, summary:'API 文档 JSON（本接口）', params:[{ name:'code', type:'string', desc:'站点口令' }], note:'给 AI/LLM 参考的 API 完整文档。', curl:'curl "https://api.usj.cc/api/docs?code=口令"' },
 ];
 
