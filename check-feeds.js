@@ -18,7 +18,7 @@ const FEEDS_URL = process.env.FEEDS_URL; // 远程 JSON 订阅源地址
 const REQUEST_TIMEOUT = 30000;
 const PROXY_FUNCTION_URL = process.env.PROXY_FUNCTION_URL; // 云函数中转地址，用于绕过境外 IP 封锁
 const PROXY_FUNCTION_URL_BACKUP = process.env.PROXY_FUNCTION_URL_BACKUP; // 备用代理地址
-const EDGEONE_API_URL = process.env.EDGEONE_API_URL; // EdgeOne KV 上报地址，如 https://rssapi.usj.cc/api/update
+const EDGEONE_API_URL = process.env.EDGEONE_API_URL; // EdgeOne KV 上报地址，如 https://api.usj.cc/api/update
 const SITE_TOKEN = process.env.SITE_TOKEN; // 网站口令（用于 EdgeOne API 鉴权）
 
 
@@ -936,7 +936,7 @@ function getSiteUrl(feedConfig) {
 
 function getFaviconUrl(siteUrl) {
 	// 使用自建 favicon 接口（自动发现 + 代理返回）
-	return `https://rssapi.usj.cc/api/favicon?url=${encodeURIComponent(siteUrl)}`;
+	return `https://api.usj.cc/api/favicon?url=${encodeURIComponent(siteUrl)}`;
 }
 
 // 给 URL 附加 token 参数（用于 EdgeOne API 鉴权）

@@ -162,20 +162,20 @@ const DOCS_HTML = `<!DOCTYPE html>
   <h3><span class="method get">GET</span><span class="path">/api/results</span></h3>
   <p class="desc"><span class="badge badge-public">公开</span> 获取所有博客最新文章（JSON），每个 Feed 附带 siteUrl 和 favicon 地址。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取全部</span>
-curl https://rssapi.usj.cc/api/results
+curl https://api.usj.cc/api/results
 
 <span class="cmt"># 筛选特定博客</span>
-curl https://rssapi.usj.cc/api/results?<span class="key">feed</span>=<span class="str">刘郎阁</span>
+curl https://api.usj.cc/api/results?<span class="key">feed</span>=<span class="str">刘郎阁</span>
 
 <span class="cmt"># 每博客只取最新 3 篇</span>
-curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
+curl https://api.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
 
 <span class="cmt"># 响应示例</span>
 {
   "<span class="key">feeds</span>": [{
     "<span class="key">name</span>": "<span class="str">吾柯</span>",
     "<span class="key">siteUrl</span>": "<span class="str">https://blog.keepke.com</span>",
-    "<span class="key">favicon</span>": "<span class="str">https://rssapi.usj.cc/api/favicon?url=...</span>",
+    "<span class="key">favicon</span>": "<span class="str">https://api.usj.cc/api/favicon?url=...</span>",
     "<span class="key">articles</span>": [...]
   }]
 }</div>
@@ -185,10 +185,10 @@ curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span clas
   <h3><span class="method get">GET</span><span class="path">/api/articles</span></h3>
   <p class="desc"><span class="badge badge-public">公开</span> 按发布时间排序的所有文章（跨博客混合）。适合友圈/时间线场景。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取最新 50 篇（默认）</span>
-curl https://rssapi.usj.cc/api/articles
+curl https://api.usj.cc/api/articles
 
 <span class="cmt"># 获取最新 100 篇</span>
-curl https://rssapi.usj.cc/api/articles?<span class="key">limit</span>=<span class="str">100</span>
+curl https://api.usj.cc/api/articles?<span class="key">limit</span>=<span class="str">100</span>
 
 <span class="cmt"># 响应示例</span>
 {
@@ -198,7 +198,7 @@ curl https://rssapi.usj.cc/api/articles?<span class="key">limit</span>=<span cla
       "<span class="key">title</span>": "...", "<span class="key">link</span>": "...", "<span class="key">pubDate</span>": "...",
       "<span class="key">feedName</span>": "<span class="str">吾柯</span>",
       "<span class="key">siteUrl</span>": "<span class="str">https://blog.keepke.com</span>",
-      "<span class="key">favicon</span>": "<span class="str">https://rssapi.usj.cc/api/favicon?url=...</span>"
+      "<span class="key">favicon</span>": "<span class="str">https://api.usj.cc/api/favicon?url=...</span>"
     }
   ]
 }</div>
@@ -208,25 +208,25 @@ curl https://rssapi.usj.cc/api/articles?<span class="key">limit</span>=<span cla
   <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/feeds</span></h3>
   <p class="desc">订阅源管理 API。GET 公开，POST/DELETE <span class="badge badge-auth">需口令</span>。支持 oldUrl 编辑模式，重复 URL 返回 409。</p>
   <div class="code"><span class="cmt"># 查看所有订阅源（无需口令，返回 { feeds: [...] }）</span>
-curl https://rssapi.usj.cc/api/feeds
+curl https://api.usj.cc/api/feeds
 
 <span class="cmt"># 添加订阅源（需要 ?token=口令）</span>
-curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
+curl -X POST https://api.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{"url": "https://example.com", "feedTitle": "示例博客"}'</span>
 
 <span class="cmt"># 批量导入</span>
-curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
+curl -X POST https://api.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{"feeds": [{ "url": "...", "feedTitle": "..." }, ...]}'</span>
 
 <span class="cmt"># 编辑（oldUrl=原URL，改链不丢数据）</span>
-curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
+curl -X POST https://api.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{"url":"https://new.com","oldUrl":"https://old.com"}'</span>
 
 <span class="cmt"># 删除</span>
-curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
+curl -X DELETE https://api.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
 <div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s409">409 重复</span><span class="status-chip s500">500</span></div></div>
 </div>
 
@@ -235,25 +235,25 @@ curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<spa
 	  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/links</span></h3>
 	  <p class="desc">友链管理 API。GET 公开（?all=1 含隐藏），POST/DELETE <span class="badge badge-auth">需口令</span>。支持 oldUrl 编辑模式，重复 URL 返回 409。</p>
 	  <div class="code"><span class="cmt"># 查看所有友链（无需口令）</span>
-	curl https://rssapi.usj.cc/api/links
+	curl https://api.usj.cc/api/links
 
 	<span class="cmt"># 添加友链（需要 ?token=口令）</span>
-	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
+	curl -X POST https://api.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
 	  -H <span class="str">"Content-Type: application/json"</span> \
 	  -d <span class="str">'{"name": "示例博客", "url": "https://example.com", "description": "一个很棒的博客"}'</span>
 
 	<span class="cmt"># 批量导入</span>
-	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
+	curl -X POST https://api.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \
 	  -H <span class="str">"Content-Type: application/json"</span> \
 	  -d <span class="str">'{"links": [{ "name": "...", "url": "..." }, ...]}'</span>
 
 	<span class="cmt"># 编辑（oldUrl=原URL）</span>
-	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \\
+	curl -X POST https://api.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \\
 	  -H <span class="str">"Content-Type: application/json"</span> \\
 	  -d <span class="str">'{"url":"https://new.com","oldUrl":"https://old.com"}'</span>
 
 <span class="cmt"># 删除</span>
-	curl -X DELETE https://rssapi.usj.cc/api/links?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
+	curl -X DELETE https://api.usj.cc/api/links?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
 	<div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s409">409 重复</span><span class="status-chip s500">500</span></div></div>
 	</div>
 
@@ -261,20 +261,20 @@ curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<spa
   <h3><span class="method get">GET</span><span class="path">/api/favicon</span></h3>
   <p class="desc"><span class="badge badge-public">公开</span> 自动发现并返回站点 favicon 图片。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取 favicon 图片（可直接用作 &lt;img src&gt;）</span>
-curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
+curl https://api.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
 
 <span class="cmt"># 查看发现的原始 favicon URL</span>
-curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>&<span class="key">meta</span>=<span class="str">1</span></div>
+curl https://api.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>&<span class="key">meta</span>=<span class="str">1</span></div>
 </div>
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/health</span></h3>
   <p class="desc"><span class="badge badge-public">公开</span> 检测订阅源站点存活状态。<strong style="color:var(--green)">无需口令</strong>。HEAD 请求目标 URL，返回状态码和延迟。</p>
   <div class="code"><span class="cmt"># 批量检测所有订阅源</span>
-curl https://rssapi.usj.cc/api/health
+curl https://api.usj.cc/api/health
 
 <span class="cmt"># 检测单个站点</span>
-curl https://rssapi.usj.cc/api/health?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
+curl https://api.usj.cc/api/health?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
 
 <span class="cmt"># 响应示例</span>
 {
@@ -288,9 +288,9 @@ curl https://rssapi.usj.cc/api/health?<span class="key">url</span>=<span class="
 
 <div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/proxy</span></h3>
-  <p class="desc"><span class="badge badge-auth">需口令</span> RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。<br>EdgeOne 节点：<code style="color:var(--accent)">rssapi.usj.cc/api/proxy</code> ｜ 腾讯云 SCF 国内节点：<code style="color:var(--accent)">scfapi.usj.cc</code></p>
-  <div class="code"><span class="cmt"># 方式一：EdgeOne Pages 代理（rssapi.usj.cc，需口令）</span>
-curl -X POST https://rssapi.usj.cc/api/proxy?<span class="key">token</span>=<span class="str">xxx</span> \\
+  <p class="desc"><span class="badge badge-auth">需口令</span> RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。<br>EdgeOne 节点：<code style="color:var(--accent)">api.usj.cc/api/proxy</code> ｜ 腾讯云 SCF 国内节点：<code style="color:var(--accent)">scfapi.usj.cc</code></p>
+  <div class="code"><span class="cmt"># 方式一：EdgeOne Pages 代理（api.usj.cc，需口令）</span>
+curl -X POST https://api.usj.cc/api/proxy?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span>
 
@@ -315,10 +315,10 @@ curl -X POST https://scfapi.usj.cc/ \\
   <h3><span class="method get">GET</span><span class="method post">POST</span><span class="path">/api/wechat-material</span></h3>
   <p class="desc"><span class="badge badge-auth">POST 需口令</span> 同步文章到微信公众号草稿箱（调用 draft/add，不群发）。POST 需要口令。<br>封面图自动上传到永久素材库，文内图片自动上传到微信 CDN。</p>
   <div class="code"><span class="cmt"># 查看微信配置状态（无需口令）</span>
-curl https://rssapi.usj.cc/api/wechat-material
+curl https://api.usj.cc/api/wechat-material
 
 <span class="cmt"># 首次使用：同时传入凭证和文章（appId/appSecret 会自动保存到 KV）</span>
-curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
+curl -X POST https://api.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{
   "appId": "wx1234567890",
@@ -340,7 +340,7 @@ curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</
 }'</span>
 
 <span class="cmt"># 后续调用可省略 appId/appSecret（已保存到 KV）</span>
-curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
+curl -X POST https://api.usj.cc/api/wechat-material?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{
   "articles": [{

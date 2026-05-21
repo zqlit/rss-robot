@@ -142,13 +142,13 @@
   </h3>
   <p class="desc">获取所有博客最新文章，支持按博客筛选和限制文章数。</p>
   <div class="code"><span class="cmt"># 获取全部</span>
-curl https://rssapi.usj.cc/api/results
+curl https://api.usj.cc/api/results
 
 <span class="cmt"># 筛选特定博客</span>
-curl https://rssapi.usj.cc/api/results?<span class="key">feed</span>=<span class="str">刘郎阁</span>
+curl https://api.usj.cc/api/results?<span class="key">feed</span>=<span class="str">刘郎阁</span>
 
 <span class="cmt"># 每博客只取最新 3 篇</span>
-curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
+curl https://api.usj.cc/api/results?<span class="key">limit</span>=<span class="str">3</span>
 </div>
 </div>
 
@@ -159,7 +159,7 @@ curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span clas
   </h3>
   <p class="desc">RSS 抓取代理。通过国内节点抓取被境外封锁的博客。</p>
   <div class="code"><span class="cmt"># 代理抓取目标 URL</span>
-curl -X POST https://rssapi.usj.cc/api/proxy \
+curl -X POST https://api.usj.cc/api/proxy \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{"url": "https://example.com/feed", "timeout": 15000}'</span></div>
 </div>

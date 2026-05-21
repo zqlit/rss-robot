@@ -159,7 +159,7 @@ const MANAGE_HTML = `<!DOCTYPE html>
 
 <div class="feed-url-bar">
   <span style="color:var(--muted)">订阅地址</span>
-  <code id="feedUrlText">https://rssapi.usj.cc/api/feeds</code>
+  <code id="feedUrlText">https://api.usj.cc/api/feeds</code>
   <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="copyFeedUrl()">复制</button>
 </div>
 
@@ -278,7 +278,7 @@ function showToast(msg, isError) {
 }
 
 function copyFeedUrl() {
-  navigator.clipboard.writeText('https://rssapi.usj.cc/api/feeds').then(() => showToast('已复制订阅地址'));
+  navigator.clipboard.writeText('https://api.usj.cc/api/feeds').then(() => showToast('已复制订阅地址'));
 }
 
 function showTab(name) {
@@ -445,7 +445,7 @@ function renderLinkTable() {
   }
   document.getElementById('linkEmpty').style.display = 'none';
   tbody.innerHTML = links.map((l, i) => {
-    var img = l.image || l.avatar || ('https://rssapi.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
+    var img = l.image || l.avatar || ('https://api.usj.cc/api/favicon?url=' + encodeURIComponent(l.url));
     var hiddenBadge = l.hidden ? ' <span style="font-size:10px;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:1px 5px;margin-left:6px">隐藏</span>' : '';
     return '<tr>' +
       '<td><img src="' + img + '" class="link-avatar" onerror="this.style.opacity=0"></td>' +

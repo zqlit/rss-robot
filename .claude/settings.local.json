@@ -6,7 +6,7 @@
       "Bash(node *)",
       "Bash(curl *)",
       "Bash(gh run *)",
-      "Bash(PROXY_FUNCTION_URL=https://rssapi.usj.cc/api/proxy node -e ' *)",
+      "Bash(PROXY_FUNCTION_URL=https://api.usj.cc/api/proxy node -e ' *)",
       "WebFetch(domain:pages.edgeone.ai)",
       "WebFetch(domain:open.motues.top)",
       "Bash(git add *)",
