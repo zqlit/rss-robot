@@ -250,7 +250,7 @@ function parseFeedXml(xml, feedUrl) {
 		const authorName = author.replace(/<name>([\s\S]*?)<\/name>/gi, '$1').trim();
 
 		if (title && link) {
-			const articleDate = parseDate(pubDate);
+			let articleDate = parseDate(pubDate);
 			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: decodeXml(title).trim(),
@@ -298,7 +298,7 @@ function parseJsonFeed(json, feedUrl) {
 		const author = Array.isArray(item.authors) ? item.authors.map((a) => a.name).join(', ') : (item.author?.name || item.author || '');
 
 		if (title && link) {
-			const articleDate = parseDate(pubDate);
+			let articleDate = parseDate(pubDate);
 			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: title.trim(),
@@ -347,7 +347,7 @@ function parseCustomJson(json, config) {
 		const feedTitle = getNestedValue(item, feedTitleKey) || config.feedTitle || config.url || '';
 
 		if (title && link) {
-			const articleDate = parseDate(pubDate);
+			let articleDate = parseDate(pubDate);
 			if (!articleDate) articleDate = new Date().toISOString();
 			articles.push({
 				title: String(title).trim(),

@@ -87,9 +87,24 @@ export async function onRequest(context) {
         });
       }
 
+      // 重复检测：新增模式下 URL 已存在则拒绝；编辑模式下新旧 URL 不同才算冲突
+      const duplicates = [];
       for (const link of incoming) {
         if (!link.url) continue;
         const idx = data.links.findIndex((l) => l.url === link.url);
+        if (idx >= 0 && link.url !== link.oldUrl) {
+          duplicates.push(link.url);
+        }
+      }
+      if (duplicates.length > 0) {
+        return new Response(JSON.stringify({ error: '链接已存在，不允许重复添加', duplicates }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      for (const link of incoming) {
+        if (!link.url) continue;
         const entry = {
           name: link.name || link.title || '',
           url: link.url,
@@ -97,16 +112,23 @@ export async function onRequest(context) {
           description: link.description || '',
           rss: link.rss || '',
           hidden: link.hidden || false,
-          addedAt: idx >= 0 ? data.links[idx].addedAt : new Date().toISOString(),
+          addedAt: new Date().toISOString(),
         };
-        if (idx >= 0) {
-          data.links[idx] = entry;
+        // 编辑模式：按 oldUrl 查找并替换，保留原始 addedAt
+        if (link.oldUrl) {
+          const idx = data.links.findIndex((l) => l.url === link.oldUrl);
+          if (idx >= 0) {
+            entry.addedAt = data.links[idx].addedAt;
+            data.links[idx] = entry;
+          } else {
+            data.links.push(entry);
+          }
         } else {
           data.links.push(entry);
         }
       }
 
-      await RSS_KV.put('friend_links', JSON.stringify(data));
+            await RSS_KV.put('friend_links', JSON.stringify(data));
       return new Response(JSON.stringify({ ok: true, links: data.links }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

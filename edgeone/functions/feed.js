@@ -403,6 +403,7 @@ async function saveFeed() {
   if (path) body.path = path;
   const proxy = document.getElementById('feedProxy').value;
   if (proxy) body.proxy = true;
+  if (editingUrl) body.oldUrl = editingUrl;
   try {
     const res = await fetch('/api/feeds?token=' + encodeURIComponent(token), {
       method: 'POST',
@@ -512,6 +513,7 @@ async function saveLink() {
   const rss = document.getElementById('linkRss').value.trim();
   if (rss) body.rss = rss;
   body.hidden = document.getElementById('linkHidden').checked;
+  if (editingLinkUrl) body.oldUrl = editingLinkUrl;
   try {
     const res = await fetch('/api/links?token=' + encodeURIComponent(token), {
       method: 'POST',

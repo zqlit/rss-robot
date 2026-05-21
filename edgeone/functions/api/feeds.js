@@ -39,8 +39,9 @@ async function handleList() {
 }
 
 // POST — 添加或更新订阅源
-//  单条: { url: "...", feedTitle: "...", ... }
-//  批量: { feeds: [{ url: "...", feedTitle: "..." }, ...] }
+//  单条: { url: "...", feedTitle: "...", oldUrl? "..." }
+//  批量: { feeds: [{ url: "...", feedTitle: "...", oldUrl? "..." }, ...] }
+//  传 oldUrl 表示编辑模式，按旧 URL 查找并更新
 async function handleAdd(request) {
   if (typeof RSS_KV === 'undefined') {
     return respond({ error: 'KV not configured' }, 500);
@@ -60,13 +61,31 @@ async function handleAdd(request) {
     try { data = JSON.parse(raw); } catch { data = { feeds: [] }; }
   }
 
-  const newFeeds = body.feeds && Array.isArray(body.feeds) ? body.feeds : [body];
-  for (const feed of newFeeds) {
+  const incoming = body.feeds && Array.isArray(body.feeds) ? body.feeds : [body];
+
+  // 重复检测：新增模式下 URL 已存在则拒绝；编辑模式下新旧 URL 不同才算冲突
+  const duplicates = [];
+  for (const feed of incoming) {
     if (!feed.url) continue;
-    // 如果 URL 已存在则更新字段，否则追加
     const idx = data.feeds.findIndex((f) => f.url === feed.url);
-    if (idx >= 0) {
-      data.feeds[idx] = { ...data.feeds[idx], ...feed };
+    if (idx >= 0 && feed.url !== feed.oldUrl) {
+      duplicates.push(feed.url);
+    }
+  }
+  if (duplicates.length > 0) {
+    return respond({ error: '链接已存在，不允许重复添加', duplicates }, 409);
+  }
+
+  for (const feed of incoming) {
+    if (!feed.url) continue;
+    // 编辑模式：按 oldUrl 查找并替换
+    if (feed.oldUrl) {
+      const idx = data.feeds.findIndex((f) => f.url === feed.oldUrl);
+      if (idx >= 0) {
+        data.feeds[idx] = { ...data.feeds[idx], url: feed.url, feedTitle: feed.feedTitle || data.feeds[idx].feedTitle };
+      } else {
+        data.feeds.push({ url: feed.url, feedTitle: feed.feedTitle || '' });
+      }
     } else {
       data.feeds.push({ url: feed.url, feedTitle: feed.feedTitle || '' });
     }

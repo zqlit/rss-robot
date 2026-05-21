@@ -123,6 +123,25 @@ const DOCS_HTML = `<!DOCTYPE html>
   .code .key { color: var(--accent); }
   .code .str { color: #a5d6ff; }
   .code .cmt { color: #6e7681; }
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+  .badge-public { background: #23863622; color: var(--green); border: 1px solid #23863644; }
+  .badge-auth { background: #d2991d22; color: var(--yellow); border: 1px solid #d2991d44; }
+  table.params { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  table.params th { background: #1c2333; color: var(--muted); font-weight: 600; padding: 7px 10px; text-align: left; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  table.params td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.params td.n { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--accent); white-space: nowrap; }
+  table.params td.t { color: var(--green); font-size: 11px; }
+  table.params td.req { color: var(--red); font-weight: 600; font-size: 11px; }
+  table.params td.opt { color: var(--muted); font-size: 11px; }
+  table.params td.d { color: var(--muted); line-height: 1.5; }
+  .status-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .status-chip { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+  .s200 { background: #23863622; color: var(--green); }
+  .s400 { background: #d2991d22; color: var(--yellow); }
+  .s401 { background: #da363322; color: var(--red); }
+  .s409 { background: #da363322; color: var(--red); }
+  .s500 { background: #da363322; color: var(--red); }
+  .s502 { background: #da363322; color: var(--red); }
   footer { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); margin-top: 32px; }
   footer a { color: var(--accent); text-decoration: none; }
 </style>
@@ -141,7 +160,7 @@ const DOCS_HTML = `<!DOCTYPE html>
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/results</span></h3>
-  <p class="desc">获取所有博客最新文章（JSON），每个 Feed 附带 siteUrl 和 favicon 地址。<strong style="color:var(--green)">无需口令</strong></p>
+  <p class="desc"><span class="badge badge-public">公开</span> 获取所有博客最新文章（JSON），每个 Feed 附带 siteUrl 和 favicon 地址。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取全部</span>
 curl https://rssapi.usj.cc/api/results
 
@@ -164,7 +183,7 @@ curl https://rssapi.usj.cc/api/results?<span class="key">limit</span>=<span clas
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/articles</span></h3>
-  <p class="desc">按发布时间排序的所有文章（跨博客混合）。适合友圈/时间线场景。<strong style="color:var(--green)">无需口令</strong></p>
+  <p class="desc"><span class="badge badge-public">公开</span> 按发布时间排序的所有文章（跨博客混合）。适合友圈/时间线场景。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取最新 50 篇（默认）</span>
 curl https://rssapi.usj.cc/api/articles
 
@@ -187,7 +206,7 @@ curl https://rssapi.usj.cc/api/articles?<span class="key">limit</span>=<span cla
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/feeds</span></h3>
-  <p class="desc">订阅源管理 API。通过接口增删订阅源。POST/DELETE 需要口令。</p>
+  <p class="desc">订阅源管理 API。GET 公开，POST/DELETE <span class="badge badge-auth">需口令</span>。支持 oldUrl 编辑模式，重复 URL 返回 409。</p>
   <div class="code"><span class="cmt"># 查看所有订阅源（无需口令，返回 { feeds: [...] }）</span>
 curl https://rssapi.usj.cc/api/feeds
 
@@ -201,14 +220,20 @@ curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<spa
   -H <span class="str">"Content-Type: application/json"</span> \\
   -d <span class="str">'{"feeds": [{ "url": "...", "feedTitle": "..." }, ...]}'</span>
 
-<span class="cmt"># 删除订阅源（需要 ?token=口令）</span>
-curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span></div>
+<span class="cmt"># 编辑（oldUrl=原URL，改链不丢数据）</span>
+curl -X POST https://rssapi.usj.cc/api/feeds?<span class="key">token</span>=<span class="str">xxx</span> \\
+  -H <span class="str">"Content-Type: application/json"</span> \\
+  -d <span class="str">'{"url":"https://new.com","oldUrl":"https://old.com"}'</span>
+
+<span class="cmt"># 删除</span>
+curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
+<div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s409">409 重复</span><span class="status-chip s500">500</span></div></div>
 </div>
 
 
 	<div class="endpoint">
 	  <h3><span class="method get">GET</span><span class="method post">POST</span><span class="method delete">DELETE</span><span class="path">/api/links</span></h3>
-	  <p class="desc">友链管理 API。GET 公开（默认过滤隐藏项，?all=1 查看全部），POST/DELETE 需要口令。支持 hidden 标记隐藏。</p>
+	  <p class="desc">友链管理 API。GET 公开（?all=1 含隐藏），POST/DELETE <span class="badge badge-auth">需口令</span>。支持 oldUrl 编辑模式，重复 URL 返回 409。</p>
 	  <div class="code"><span class="cmt"># 查看所有友链（无需口令）</span>
 	curl https://rssapi.usj.cc/api/links
 
@@ -222,13 +247,19 @@ curl -X DELETE https://rssapi.usj.cc/api/feeds?<span class="key">url</span>=<spa
 	  -H <span class="str">"Content-Type: application/json"</span> \
 	  -d <span class="str">'{"links": [{ "name": "...", "url": "..." }, ...]}'</span>
 
-	<span class="cmt"># 删除友链（需要 ?token=口令）</span>
-	curl -X DELETE https://rssapi.usj.cc/api/links?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span></div>
+	<span class="cmt"># 编辑（oldUrl=原URL）</span>
+	curl -X POST https://rssapi.usj.cc/api/links?<span class="key">token</span>=<span class="str">xxx</span> \\
+	  -H <span class="str">"Content-Type: application/json"</span> \\
+	  -d <span class="str">'{"url":"https://new.com","oldUrl":"https://old.com"}'</span>
+
+<span class="cmt"># 删除</span>
+	curl -X DELETE https://rssapi.usj.cc/api/links?<span class="key">url</span>=<span class="str">https://example.com</span>&<span class="key">token</span>=<span class="str">xxx</span>
+	<div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s409">409 重复</span><span class="status-chip s500">500</span></div></div>
 	</div>
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/favicon</span></h3>
-  <p class="desc">自动发现并返回站点 favicon 图片。<strong style="color:var(--green)">无需口令</strong></p>
+  <p class="desc"><span class="badge badge-public">公开</span> 自动发现并返回站点 favicon 图片。<strong style="color:var(--green)">无需口令</strong></p>
   <div class="code"><span class="cmt"># 获取 favicon 图片（可直接用作 &lt;img src&gt;）</span>
 curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class="str">blog.keepke.com</span>
 
@@ -238,7 +269,7 @@ curl https://rssapi.usj.cc/api/favicon?<span class="key">url</span>=<span class=
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="path">/api/health</span></h3>
-  <p class="desc">检测订阅源站点存活状态。<strong style="color:var(--green)">无需口令</strong>。HEAD 请求目标 URL，返回状态码和延迟。</p>
+  <p class="desc"><span class="badge badge-public">公开</span> 检测订阅源站点存活状态。<strong style="color:var(--green)">无需口令</strong>。HEAD 请求目标 URL，返回状态码和延迟。</p>
   <div class="code"><span class="cmt"># 批量检测所有订阅源</span>
 curl https://rssapi.usj.cc/api/health
 
@@ -253,11 +284,11 @@ curl https://rssapi.usj.cc/api/health?<span class="key">url</span>=<span class="
     { "<span class="key">url</span>": "...", "<span class="key">status</span>": 0, "<span class="key">ok</span>": false, "<span class="key">error</span>": "timeout" }
   ]
 }</div>
-</div>
+<div class="status-bar"><span class="status-chip s200">200 OK</span></div></div>
 
 <div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/proxy</span></h3>
-  <p class="desc">RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。<br>EdgeOne 节点：<code style="color:var(--accent)">rssapi.usj.cc/api/proxy</code> ｜ 腾讯云 SCF 国内节点：<code style="color:var(--accent)">scfapi.usj.cc</code></p>
+  <p class="desc"><span class="badge badge-auth">需口令</span> RSS 抓取代理，通过国内节点抓取被境外封锁的博客。需要口令。<br>EdgeOne 节点：<code style="color:var(--accent)">rssapi.usj.cc/api/proxy</code> ｜ 腾讯云 SCF 国内节点：<code style="color:var(--accent)">scfapi.usj.cc</code></p>
   <div class="code"><span class="cmt"># 方式一：EdgeOne Pages 代理（rssapi.usj.cc，需口令）</span>
 curl -X POST https://rssapi.usj.cc/api/proxy?<span class="key">token</span>=<span class="str">xxx</span> \\
   -H <span class="str">"Content-Type: application/json"</span> \\
@@ -278,11 +309,11 @@ curl -X POST https://scfapi.usj.cc/ \\
   "<span class="key">contentType</span>": "<span class="str">application/rss+xml</span>",
   "<span class="key">body</span>": "<span class="str">&lt;?xml version=\"1.0\"...</span>"
 }</div>
-</div>
+<div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s502">502 抓取失败</span></div></div>
 
 <div class="endpoint">
   <h3><span class="method get">GET</span><span class="method post">POST</span><span class="path">/api/wechat-material</span></h3>
-  <p class="desc">同步文章到微信公众号草稿箱（调用 draft/add，不群发）。POST 需要口令。<br>封面图自动上传到永久素材库，文内图片自动上传到微信 CDN。</p>
+  <p class="desc"><span class="badge badge-auth">POST 需口令</span> 同步文章到微信公众号草稿箱（调用 draft/add，不群发）。POST 需要口令。<br>封面图自动上传到永久素材库，文内图片自动上传到微信 CDN。</p>
   <div class="code"><span class="cmt"># 查看微信配置状态（无需口令）</span>
 curl https://rssapi.usj.cc/api/wechat-material
 
@@ -335,7 +366,7 @@ curl -X POST https://rssapi.usj.cc/api/wechat-material?<span class="key">token</
   "<span class="key">media_id</span>": "<span class="str">abc123def456</span>",
   "<span class="key">message</span>": "<span class="str">已同步 1 篇文章到公众号草稿箱</span>"
 }</div>
-</div>
+<div class="status-bar"><span class="status-chip s200">200 OK</span><span class="status-chip s400">400</span><span class="status-chip s401">401</span><span class="status-chip s500">500 微信错误</span></div></div>
 
 <div class="endpoint">
   <h3><span class="method post">POST</span><span class="path">/api/update</span></h3>
