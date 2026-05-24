@@ -263,6 +263,18 @@ curl -X POST https://scfapi.usj.cc/ \\
   {
     tag: 'system',
     method: 'GET',
+    path: '/api/artalk/commenter',
+    auth: true,
+    summary: '代理 Artalk 查询用户最新评论，返回 nick + link',
+    params: [
+      { name: 'email', type: 'string', desc: '用户邮箱' },
+    ],
+    note: '内部 Artalk admin 账号存在 KV artalk_config。POST 可配置: { name, email, password, site_name, api_url }。',
+    curl: 'curl "https://api.usj.cc/api/artalk/commenter?email=user@example.com&token=xxx"',
+  },
+  {
+    tag: 'system',
+    method: 'GET',
     path: '/api/ai/greeting',
     auth: true,
     summary: '随机返回问候语（预生成词库 + 时段/节日匹配）',
