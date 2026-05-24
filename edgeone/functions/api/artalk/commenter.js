@@ -71,16 +71,16 @@ export async function onRequest(context) {
 
   try {
     // 1. 登录 Artalk
-    const loginRes = await fetch(`${api_url}/api/v2/admin/login`, {
+    const loginRes = await fetch(`${api_url}/api/v2/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
     const loginJson = await loginRes.json();
-    if (!loginJson.data?.token) {
+    if (!loginJson.token) {
       return respond({ error: 'Artalk 登录失败: ' + (loginJson.msg || 'unknown') }, 502);
     }
-    const adminToken = loginJson.data.token;
+    const adminToken = loginJson.token;
 
     // 2. 查最新评论
     const searchUrl = `${api_url}/api/v2/admin/comments?site_name=${encodeURIComponent(site_name)}&search=${encodeURIComponent(targetEmail)}&limit=1&sort_by=date_desc`;
