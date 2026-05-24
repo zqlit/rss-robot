@@ -3,8 +3,17 @@
 //
 // KV: artalk_config → { name, email, password, site_name, api_url }
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 function respond(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS },
+  });
 }
 
 async function requireAuth(request) {
@@ -20,6 +29,11 @@ async function requireAuth(request) {
 
 export async function onRequest(context) {
   const { request } = context;
+
+  // CORS 预检
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
   if (request.method === 'POST') {
     if (!(await requireAuth(request))) return respond({ error: 'unauthorized' }, 401);
