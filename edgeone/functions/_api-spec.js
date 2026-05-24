@@ -263,6 +263,18 @@ curl -X POST https://scfapi.usj.cc/ \\
   {
     tag: 'system',
     method: 'GET',
+    path: '/api/ai/greeting',
+    auth: true,
+    summary: '随机返回问候语（预生成词库 + 时段/节日匹配）',
+    params: [
+      { name: 'count', type: 'number', desc: '生成几条，默认 10，最大 50' },
+    ],
+    note: '词库预存 KV + DeepSeek Flash 动态扩充。覆盖 7 时段 + 14 节日 + 节气。POST {action:"generate"} 调 AI 生成新词，POST {action:"config",deepseek_key:"sk-..."} 存 Key。',
+    curl: 'curl "https://api.usj.cc/api/ai/greeting?count=5&token=xxx"',
+  },
+  {
+    tag: 'system',
+    method: 'GET',
     path: '/api/random-image',
     auth: false,
     summary: '随机返回文件夹中的图片',
