@@ -8,8 +8,15 @@
 //   img_folder:<folder>   → [{ name, type?, url? }, ...]
 //   img_data:<folder>/<n> → base64 图片数据（仅上传的图片）
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 function respond(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(data), { status, headers: CORS });
 }
 
 async function requireAuth(request) {
@@ -143,6 +150,10 @@ async function handlePost(request) {
 
 export async function onRequest(context) {
   const { request } = context;
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
   switch (request.method) {
     case 'GET':

@@ -2,6 +2,13 @@
 //   { oldPassword, newPassword } — 修改口令
 //   仅验证: 直接 GET /api/auth?token=xxx 即可
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 async function requireToken(request) {
   const url = new URL(request.url);
   const cookieHeader = request.headers.get('Cookie') || '';
@@ -17,12 +24,16 @@ async function requireToken(request) {
 function respond(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: CORS,
   });
 }
 
 export async function onRequest(context) {
   const { request } = context;
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
   if (request.method === 'POST') {
     const authed = await requireToken(request);

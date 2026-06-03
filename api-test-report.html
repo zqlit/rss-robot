@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 接口测试报告</title>
+<style>
+  :root { --bg: #f8f9fa; --card: #fff; --border: #e5e7eb; --text: #1f2937; --muted: #6b7280; --green: #059669; --red: #dc2626; --yellow: #d97706; --blue: #2563eb; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .summary { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; min-width: 120px; }
+  .stat .num { font-size: 28px; font-weight: 700; }
+  .stat .label { font-size: 12px; color: var(--muted); }
+  .num.green { color: var(--green); }
+  .num.yellow { color: var(--yellow); }
+  .num.red { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 24px; font-size: 14px; }
+  th { background: #f3f4f6; text-align: left; padding: 10px 14px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  td { padding: 10px 14px; border-top: 1px solid var(--border); vertical-align: top; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-ok { background: #d1fae5; color: #065f46; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-err { background: #fee2e2; color: #991b1b; }
+  .badge-skip { background: #e5e7eb; color: #374151; }
+  .method { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+  .m-get { background: #d1fae5; color: #065f46; }
+  .m-post { background: #dbeafe; color: #1e40af; }
+  .m-delete { background: #fee2e2; color: #991b1b; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .section { margin-bottom: 32px; }
+  .section h2 { font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+  .fix-list { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
+  .fix-list li { margin-bottom: 8px; font-size: 14px; }
+  .fix-list li:last-child { margin-bottom: 0; }
+  code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+  .tag { font-size: 11px; color: var(--muted); background: #f3f4f6; padding: 1px 6px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>UAPI 接口测试报告</h1>
+<p class="subtitle">api.usj.cc — 2026-06-03</p>
+
+<div class="summary">
+  <div class="stat"><div class="num green">8</div><div class="label">正常</div></div>
+  <div class="stat"><div class="num yellow">5</div><div class="label">需修复</div></div>
+  <div class="stat"><div class="num red">0</div><div class="label">不可用</div></div>
+  <div class="stat"><div class="num" style="color:var(--muted)">1</div><div class="label">跳过</div></div>
+</div>
+
+<div class="section">
+<h2>测试结果</h2>
+<table>
+<thead>
+<tr><th>接口</th><th>方法</th><th>状态</th><th>CORS</th><th>OPTIONS</th><th>备注</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>/api/feeds</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span><span class="method m-delete">DEL</span></td>
+  <td><span class="badge badge-ok">已修复</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td class="note">本次修复</td>
+</tr>
+<tr>
+  <td><code>/api/links</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span><span class="method m-delete">DEL</span></td>
+  <td><span class="badge badge-ok">已修复</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td class="note">本次修复</td>
+</tr>
+<tr>
+  <td><code>/api/results</code></td>
+  <td><span class="method m-get">GET</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-warn">⚠️</span></td>
+  <td class="note">仅 GET，无 OPTIONS 但不影响</td>
+</tr>
+<tr>
+  <td><code>/api/articles</code></td>
+  <td><span class="method m-get">GET</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-warn">⚠️</span></td>
+  <td class="note">仅 GET，error 响应缺 CORS 头</td>
+</tr>
+<tr>
+  <td><code>/api/health</code></td>
+  <td><span class="method m-get">GET</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-warn">⚠️</span></td>
+  <td class="note">仅 GET，不影响</td>
+</tr>
+<tr>
+  <td><code>/api/favicon</code></td>
+  <td><span class="method m-get">GET</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-warn">⚠️</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">图片响应有 CORS，JSON 错误响应无 CORS</td>
+</tr>
+<tr>
+  <td><code>/api/artalk/commenter</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td><span class="badge badge-ok">✅</span></td>
+  <td class="note">已有完整 CORS 支持</td>
+</tr>
+<tr>
+  <td><code>/api/wechat-material</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-warn">需修复</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">前端 POST 会被浏览器拦截</td>
+</tr>
+<tr>
+  <td><code>/api/proxy</code></td>
+  <td><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-warn">需修复</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">前端 POST 会被浏览器拦截</td>
+</tr>
+<tr>
+  <td><code>/api/auth</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-warn">需修复</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">前端 POST 改密码会被拦截</td>
+</tr>
+<tr>
+  <td><code>/api/random-image</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-warn">需修复</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">POST 上传图片会被拦截</td>
+</tr>
+<tr>
+  <td><code>/api/ai/greeting</code></td>
+  <td><span class="method m-get">GET</span><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-warn">需修复</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td class="note">POST 管理词库会被拦截</td>
+</tr>
+<tr>
+  <td><code>/api/docs</code></td>
+  <td><span class="method m-get">GET</span></td>
+  <td><span class="badge badge-ok">正常</span></td>
+  <td><span class="badge badge-err">❌</span></td>
+  <td><span class="badge badge-warn">⚠️</span></td>
+  <td class="note">纯 GET，前端不调用，低优先级</td>
+</tr>
+<tr>
+  <td><code>/api/update</code></td>
+  <td><span class="method m-post">POST</span></td>
+  <td><span class="badge badge-skip">跳过</span></td>
+  <td><span class="badge badge-skip">-</span></td>
+  <td><span class="badge badge-skip">-</span></td>
+  <td class="note">GitHub Action 服务端调用，不需要 CORS</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<h2>需要修复的接口（5 个）</h2>
+<p style="margin-bottom:12px;font-size:14px;">共性问题：缺少 CORS 响应头 + OPTIONS 预检处理。前端跨域 POST/DELETE 请求会被浏览器拦截。</p>
+<div class="fix-list">
+<ol>
+  <li><code>/api/auth</code> — <strong>口令验证/修改</strong>，前端修改密码的 POST 会被拦截</li>
+  <li><code>/api/proxy</code> — <strong>RSS 代理抓取</strong>，前端调用的 POST 会被拦截</li>
+  <li><code>/api/wechat-material</code> — <strong>微信同步</strong>，前端 POST 同步文章会被拦截</li>
+  <li><code>/api/random-image</code> — <strong>随机图片</strong>，前端 POST 上传图片会被拦截</li>
+  <li><code>/api/ai/greeting</code> — <strong>问候语管理</strong>，前端 POST 管理词库会被拦截</li>
+</ol>
+</div>
+</div>
+
+<div class="section">
+<h2>修复方案</h2>
+<p style="margin-bottom:12px;font-size:14px;">每个文件加两处改动（以 <code>auth.js</code> 为例）：</p>
+<div class="fix-list">
+<ol>
+  <li>在 <code>respond()</code> 函数的 headers 里加 <code>'Access-Control-Allow-Origin': '*'</code></li>
+  <li>在 <code>onRequest</code> 入口加 <code>if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })</code></li>
+</ol>
+</div>
+</div>
+
+</div>
+</body>
+</html>

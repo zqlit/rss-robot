@@ -95,7 +95,7 @@ export async function onRequest(context) {
   if (!siteUrl) {
     return new Response(JSON.stringify({ error: 'url parameter required' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
@@ -118,7 +118,7 @@ export async function onRequest(context) {
     if (!faviconUrl) {
       return new Response(JSON.stringify({ error: 'favicon not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
@@ -126,7 +126,7 @@ export async function onRequest(context) {
     if (url.searchParams.get('meta')) {
       return new Response(JSON.stringify({ url: faviconUrl }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
@@ -143,7 +143,7 @@ export async function onRequest(context) {
     if (!imgRes.ok) {
       return new Response(JSON.stringify({ error: `fetch failed: HTTP ${imgRes.status}` }), {
         status: 502,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
@@ -161,7 +161,7 @@ export async function onRequest(context) {
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 }

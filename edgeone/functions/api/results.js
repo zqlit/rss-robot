@@ -11,7 +11,7 @@ export async function onRequest(context) {
   if (typeof RSS_KV === 'undefined') {
     return new Response(JSON.stringify({ error: 'KV not configured' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
@@ -53,7 +53,7 @@ export async function onRequest(context) {
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 }

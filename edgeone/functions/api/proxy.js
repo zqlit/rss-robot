@@ -1,5 +1,12 @@
 // POST /api/proxy — RSS 代理抓取
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 async function handlePost(context) {
   const { request } = context;
 
@@ -9,7 +16,7 @@ async function handlePost(context) {
   } catch {
     return new Response(JSON.stringify({ error: 'invalid json' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: CORS,
     });
   }
 
@@ -18,7 +25,7 @@ async function handlePost(context) {
   if (!url) {
     return new Response(JSON.stringify({ error: 'url required' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: CORS,
     });
   }
 
@@ -49,7 +56,7 @@ async function handlePost(context) {
       }),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: CORS,
       }
     );
   } catch (err) {
@@ -57,7 +64,7 @@ async function handlePost(context) {
       JSON.stringify({ ok: false, error: err.message }),
       {
         status: 502,
-        headers: { 'Content-Type': 'application/json' },
+        headers: CORS,
       }
     );
   }
@@ -74,21 +81,26 @@ async function requireAuth(request) {
   return token === password;
 }
 
+function respond(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: CORS,
+  });
+}
+
 export async function onRequest(context) {
   const { request } = context;
 
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
+
   if (request.method === 'POST') {
     if (!await requireAuth(request)) {
-      return new Response(JSON.stringify({ error: 'unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return respond({ error: 'unauthorized' }, 401);
     }
     return handlePost(context);
   }
 
-  return new Response(JSON.stringify({ error: 'POST only' }), {
-    status: 405,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return respond({ error: 'POST only' }, 405);
 }

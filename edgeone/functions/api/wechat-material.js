@@ -15,10 +15,17 @@
 const WECHAT_CONFIG_KEY = 'wechat_config';
 const WECHAT_TOKEN_KEY = 'wechat_token';
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 function respond(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: CORS,
   });
 }
 
@@ -295,6 +302,10 @@ async function handleGet() {
 
 export async function onRequest(context) {
   const { request } = context;
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
   switch (request.method) {
     case 'GET':
