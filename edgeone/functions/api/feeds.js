@@ -4,11 +4,22 @@
 
 const KV_KEY = 'feeds_config';
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 function respond(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: CORS,
   });
+}
+
+function corsOptions() {
+  return new Response(null, { status: 204, headers: CORS });
 }
 
 async function requireAuth(request) {
@@ -125,6 +136,8 @@ async function handleRemove(request) {
 
 export async function onRequest(context) {
   const { request } = context;
+
+  if (request.method === 'OPTIONS') return corsOptions();
 
   switch (request.method) {
     case 'GET':

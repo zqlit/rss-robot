@@ -2,6 +2,21 @@
 // POST /api/links           — 添加/更新友链（需口令）
 // DELETE /api/links?url=xxx  — 删除友链（需口令）
 
+const CORS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+function respond(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: CORS });
+}
+
+function corsOptions() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 async function requireAuth(request) {
   const cookieHeader = request.headers.get('Cookie') || '';
   const cookieMatch = cookieHeader.match(/site_token=([^;]+)/);
@@ -15,11 +30,10 @@ async function requireAuth(request) {
 export async function onRequest(context) {
   const { request } = context;
 
+  if (request.method === 'OPTIONS') return corsOptions();
+
   if (typeof RSS_KV === 'undefined') {
-    return new Response(JSON.stringify({ error: 'KV not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return respond({ error: 'KV not configured' }, 500);
   }
 
   const url = new URL(request.url);
@@ -33,42 +47,26 @@ export async function onRequest(context) {
     const showAll = url.searchParams.get('all') === '1';
     let links = data.links.map((l) => ({ ...l, image: l.image || l.avatar || '' }));
     if (!showAll) links = links.filter((l) => !l.hidden);
-    return new Response(JSON.stringify({ links }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=600',
-      },
-    });
+    return respond({ links });
   }
 
   // POST / DELETE — 需要口令
   if (!(await requireAuth(request))) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return respond({ error: 'unauthorized' }, 401);
   }
 
   // DELETE
   if (method === 'DELETE') {
     const targetUrl = url.searchParams.get('url');
     if (!targetUrl) {
-      return new Response(JSON.stringify({ error: 'missing url param' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return respond({ error: 'missing url param' }, 400);
     }
 
     const raw = await RSS_KV.get('friend_links');
     const data = raw ? JSON.parse(raw) : { links: [] };
     data.links = data.links.filter((l) => l.url !== targetUrl);
     await RSS_KV.put('friend_links', JSON.stringify(data));
-    return new Response(JSON.stringify({ ok: true, links: data.links }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return respond({ ok: true, links: data.links });
   }
 
   // POST — 添加或更新友链
@@ -81,10 +79,7 @@ export async function onRequest(context) {
       // 支持单条或批量
       const incoming = body.links || (body.url ? [body] : []);
       if (incoming.length === 0) {
-        return new Response(JSON.stringify({ error: 'empty body' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return respond({ error: 'empty body' }, 400);
       }
 
       // 重复检测：新增模式下 URL 已存在则拒绝；编辑模式下新旧 URL 不同才算冲突
@@ -97,10 +92,7 @@ export async function onRequest(context) {
         }
       }
       if (duplicates.length > 0) {
-        return new Response(JSON.stringify({ error: '链接已存在，不允许重复添加', duplicates }), {
-          status: 409,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return respond({ error: '链接已存在，不允许重复添加', duplicates }, 409);
       }
 
       for (const link of incoming) {
@@ -128,21 +120,12 @@ export async function onRequest(context) {
         }
       }
 
-            await RSS_KV.put('friend_links', JSON.stringify(data));
-      return new Response(JSON.stringify({ ok: true, links: data.links }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await RSS_KV.put('friend_links', JSON.stringify(data));
+      return respond({ ok: true, links: data.links });
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return respond({ error: err.message }, 500);
     }
   }
 
-  return new Response(JSON.stringify({ error: 'method not allowed' }), {
-    status: 405,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return respond({ error: 'method not allowed' }, 405);
 }
